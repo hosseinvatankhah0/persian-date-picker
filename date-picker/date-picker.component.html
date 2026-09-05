@@ -1,0 +1,93 @@
+<div [ngClass]="'dp-open'">
+  <div [attr.data-hidden]="componentConfig().hideInputContainer"
+       [hidden]="componentConfig().hideInputContainer"
+       class="dp-input-container">
+    <input
+        (ngModelChange)="onViewDateChange($event)"
+        [disabled]="disabled()"
+        [ngModel]="inputElementValue()"
+        [placeholder]="placeholder()"
+        [readonly]="componentConfig().disableKeypress"
+        class="dp-picker-input"
+        id="dp"
+        type="text"/>
+    <span #inputElementLabel (click)="inputFocused()" for="dp" class="datepicker-button" [class.disabled]="disabled()">
+            <i class="fa-duotone fa-calendar datepicker-icon" [style.fontSize.px]="fontSize()" aria-hidden="true"></i>
+        </span>
+    @if (showMinDateIsNotValid()) {
+      <div class="date-error">تاریخ انتخابی نمی‌تواند از
+        {{ transformToJalali(minDate()) }}
+        کوچکتر باشد.
+      </div>
+    }
+    @if (showMaxDateIsNotValid()) {
+      <div class="date-error">تاریخ انتخابی نمی‌تواند از
+        {{ transformToJalali(maxDate()) }}
+        بزرگتر باشد.
+      </div>
+    }
+
+  </div>
+  <div
+      class="kendo-datepicker-dialog"
+      [hidden]="!isModalOpen()">
+    <div #container>
+      <div
+          [ngSwitch]="mode()"
+          class="dp-popup {{theme()}}">
+        <dp-day-calendar #dayCalendar
+                         class="visible"
+                         (onGoToCurrent)="onGoToCurrent.emit()"
+                         (onLeftNav)="onLeftNavClick($event)"
+                         (onRightNav)="onRightNavClick($event)"
+                         (onSelect)="dateSelected($event, 'day')"
+                         *ngSwitchCase="'day'"
+                         [config]="dayCalendarConfig()"
+                         [displayDate]="displayDate()"
+                         [maxDate]="maxDate()"
+                         [minDate]="minDate()"
+                         [ngModel]="selected()"
+                         [theme]="theme()"
+                         opens="left">
+        </dp-day-calendar>
+
+        <dp-month-calendar #monthCalendar
+                           (onGoToCurrent)="onGoToCurrent.emit()"
+                           (onLeftNav)="onLeftNavClick($event)"
+                           (onRightNav)="onRightNavClick($event)"
+                           (onSelect)="dateSelected($event, 'month')"
+                           *ngSwitchCase="'month'"
+                           [config]="dayCalendarConfig()"
+                           [displayDate]="displayDate()"
+                           [ngModel]="selected()"
+                           [theme]="theme()"
+                           opens="left">
+        </dp-month-calendar>
+
+        <dp-time-select #timeSelect
+                        (onChange)="dateSelected($event, 'second', true)"
+                        *ngSwitchCase="'time'"
+                        [config]="timeSelectConfig()"
+                        [ngModel]="selected() && selected()[0]"
+                        [theme]="theme()"
+                        opens="left">
+        </dp-time-select>
+
+        <dp-day-time-calendar #daytimeCalendar
+                              (onChange)="dateSelected($event, 'second', true)"
+                              (onGoToCurrent)="onGoToCurrent.emit()"
+                              (onLeftNav)="onLeftNavClick($event)"
+                              (onRightNav)="onRightNavClick($event)"
+                              *ngSwitchCase="'daytime'"
+                              [config]="dayTimeCalendarConfig()"
+                              [displayDate]="displayDate()"
+                              [maxDate]="maxDate()"
+                              [minDate]="minDate()"
+                              [ngModel]="selected() && selected()[0]"
+                              [theme]="theme()"
+                              opens="left">
+        </dp-day-time-calendar>
+      </div>
+    </div>
+  </div>
+</div>

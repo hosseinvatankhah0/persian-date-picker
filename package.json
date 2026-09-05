@@ -1,0 +1,64 @@
+{
+  "name": "ng2-jalali-date-picker-modal",
+  "version": "1.0.0",
+  "description": "A modern, standalone Jalali (Persian) date picker modal for Angular 22 — with day/month/time/daytime modes, RTL support, and ControlValueAccessor integration.",
+  "keywords": [
+    "angular",
+    "angular22",
+    "jalali",
+    "persian",
+    "shamsi",
+    "date-picker",
+    "datepicker",
+    "modal",
+    "date-picker-modal",
+    "jalali-date-picker",
+    "standalone",
+    "signals",
+    "control-value-accessor"
+  ],
+  "license": "MIT",
+  "author": "ng2-jalali-date-picker-modal contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/ng2-jalali-date-picker-modal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/ng2-jalali-date-picker-modal/issues"
+  },
+  "homepage": "https://github.com/your-org/ng2-jalali-date-picker-modal#readme",
+  "scripts": {
+    "start": "ng serve",
+    "build": "ng build",
+    "build:lib": "ng build ng2-jalali-date-picker-modal",
+    "test": "ng test",
+    "lint": "ng lint"
+  },
+  "dependencies": {
+    "tslib": "^2.6.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.0.0",
+    "@angular/cli": "^22.0.0",
+    "@angular/compiler-cli": "^22.0.0",
+    "ng-packagr": "^22.0.0",
+    "@types/jasmine": "~5.1.0",
+    "@types/moment-jalaali": "^0.7.0",
+    "jasmine-core": "~5.1.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "less": "^4.2.0",
+    "typescript": "~6.0.0"
+  },
+  "peerDependencies": {
+    "@angular/common": "^22.0.0",
+    "@angular/core": "^22.0.0",
+    "@angular/forms": "^22.0.0",
+    "@angular/cdk": "^22.0.0",
+    "jalali-moment": "^3.3.11",
+    "rxjs": "~7.8.0"
+  }
+}

@@ -1,0 +1,74 @@
+@import '../common/styles/variables';
+
+& {
+  dp-date-picker, dp-date-picker-modal {
+    display: flex;
+
+    &.dp-material {
+      .dp-picker-input {
+        box-sizing: border-box;
+        height: @basic-height;
+        width: @basic-width;
+        font-size: 13px;
+        outline: none;
+      }
+    }
+
+    .dp-input-container {
+      position: relative;
+      flex-direction: column;
+    }
+
+    .dp-selected {
+      background: @c-primary;
+      color: @c-white;
+    }
+  }
+
+  .dp-popup {
+    position: relative;
+    background: @c-white;
+    box-shadow: 1px 1px 5px 0 fade(@c-black, 10);
+    border-left: 1px solid fade(@c-black, 10);
+    border-right: 1px solid fade(@c-black, 10);
+    border-bottom: 1px solid fade(@c-black, 10);
+    z-index: 9999999999999999;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    left: 50%;
+  }
+}
+
+.date-error {
+  font-size: 12px;
+  color: #db524b;
+  margin-top: 3px;
+}
+
+.datepicker-button {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  transform: translateY(-50%);
+  color: #42526e;
+  cursor: pointer;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .datepicker-icon {
+    line-height: 1;
+  }
+}
+
+.datepicker-button.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}

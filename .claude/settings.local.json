@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"D:/Projects/Ai/\" 2>&1 | head -n 100 *)",
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "Bash(git -C \"D:/Projects/Ai/ng2-jalali-date-picker-modal\" rev-parse --show-toplevel)",
+      "Bash(git -C \"D:/Projects/Ai/projects\" rev-parse --show-toplevel)",
+      "Bash(git -C \"D:/Projects/Ai\" rev-parse --show-toplevel)",
+      "Bash(npx ng *)",
+      "Bash(npm view *)",
+      "Bash(npx tsc *)",
+      "Bash(npm install *)",
+      "Bash(npm ls *)",
+      "Bash(npm config *)",
+      "Bash(node -e \"console.log\\(process.version\\)\")",
+      "Bash(jobs)",
+      "Bash(taskkill //F //PID 794)",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
+      "Bash(taskkill //F //PID 19224 //PID 9108 //PID 13224)",
+      "Bash(npm run *)",
+      "Bash(npx ng-packagr *)"
+    ]
+  }
+}
