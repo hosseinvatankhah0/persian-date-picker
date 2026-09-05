@@ -1,5 +1,5 @@
 {
-  "name": "ng2-jalali-date-picker-modal",
+  "name": "persian-date-picker",
   "version": "1.0.0",
   "description": "A modern, standalone Jalali (Persian) date picker modal for Angular 22 — with day/month/time/daytime modes, RTL support, and ControlValueAccessor integration.",
   "keywords": [
@@ -18,15 +18,15 @@
     "control-value-accessor"
   ],
   "license": "MIT",
-  "author": "ng2-jalali-date-picker-modal contributors",
+  "author": "persian-date-picker contributors",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/ng2-jalali-date-picker-modal.git"
+    "url": "https://github.com/your-org/persian-date-picker.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/ng2-jalali-date-picker-modal/issues"
+    "url": "https://github.com/your-org/persian-date-picker/issues"
   },
-  "homepage": "https://github.com/your-org/ng2-jalali-date-picker-modal#readme",
+  "homepage": "https://github.com/your-org/persian-date-picker#readme",
   "scripts": {
     "start": "ng serve",
     "build": "ng build",
