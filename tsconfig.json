@@ -17,7 +17,7 @@
     "module": "ES2022",
     "lib": ["ES2022", "dom"],
     "paths": {
-      "ng2-jalali-date-picker-modal": ["./index.ts"]
+      "persian-date-picker": ["./index.ts"]
     }
   },
   "angularCompilerOptions": {

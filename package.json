@@ -21,16 +21,16 @@
   "author": "persian-date-picker contributors",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/persian-date-picker.git"
+    "url": "https://github.com/hosseinvatankhah0/persian-date-picker.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/persian-date-picker/issues"
+    "url": "https://github.com/hosseinvatankhah0/persian-date-picker/issues"
   },
-  "homepage": "https://github.com/your-org/persian-date-picker#readme",
+  "homepage": "https://github.com/hosseinvatankhah0/persian-date-picker#readme",
   "scripts": {
     "start": "ng serve",
     "build": "ng build",
-    "build:lib": "ng build ng2-jalali-date-picker-modal",
+    "build:lib": "ng build persian-date-picker",
     "test": "ng test",
     "lint": "ng lint"
   },

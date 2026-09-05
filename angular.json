@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "ng2-jalali-date-picker-modal": {
+    "persian-date-picker": {
       "projectType": "library",
       "root": "",
       "sourceRoot": "",
