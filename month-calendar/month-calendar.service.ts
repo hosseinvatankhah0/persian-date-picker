@@ -70,6 +70,28 @@ export class MonthCalendarService {
     return !!(config.max && date.isAfter(config.max, 'month'));
   }
 
+  generateYearRange(config: IMonthCalendarConfig, currentYear: Moment): number[] {
+    const locale = config.locale || 'fa';
+    const years: number[] = [];
+    const current = currentYear.clone().locale(locale);
+    const minYear = config.min ? momentNs(config.min).locale(locale).year() : current.year() - 100;
+    const maxYear = config.max ? momentNs(config.max).locale(locale).year() : current.year() + 50;
+    for (let y = minYear; y <= maxYear; y++) {
+      years.push(y);
+    }
+    return years;
+  }
+
+  getYearBtnText(config: IMonthCalendarConfig, year: Moment): string {
+    if (config.yearFormatter) {
+      return config.yearFormatter(year);
+    }
+    if (config.locale) {
+      year.locale(config.locale);
+    }
+    return year.format(config.yearFormat);
+  }
+
   shouldShowLeft(min: Moment | undefined, currentMonthView: Moment): boolean {
     return min ? min.isBefore(currentMonthView, 'year') : true;
   }

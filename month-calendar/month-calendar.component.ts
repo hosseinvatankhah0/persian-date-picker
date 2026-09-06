@@ -82,6 +82,7 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
   isInited = signal(false);
   selected = signal<Moment[]>([]);
   currentDateView = signal<Moment>(moment());
+  showYearSelector = signal(false);
 
   componentConfig = computed(() => this.monthCalendarService.getConfig(this.config() || {}));
   yearMonths = computed(() => this.monthCalendarService.generateYear(this.componentConfig(), this.currentDateView(), this.selected()));
@@ -97,6 +98,7 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
     this.componentConfig().min,
     this.componentConfig().max
   ));
+  yearRange = computed(() => this.monthCalendarService.generateYearRange(this.componentConfig(), this.currentDateView()));
 
   inputValue: CalendarValue = '';
   inputValueType: ECalendarValue = ECalendarValue.String;
@@ -242,7 +244,20 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
   }
 
   toggleCalendarMode() {
-    this.onNavHeaderBtnClick.emit();
+    this.showYearSelector.set(!this.showYearSelector());
+  }
+
+  selectYear(year: number) {
+    const config = this.componentConfig();
+    const locale = config.locale || 'fa';
+    const newDate = this.currentDateView().clone().locale(locale).year(year);
+    this.currentDateView.set(newDate);
+    this.showYearSelector.set(false);
+    this.cd.markForCheck();
+  }
+
+  isCurrentYear(year: number): boolean {
+    return this.currentDateView().year() === year;
   }
 
   getMonthBtnCssClass(month: IMonth): { [klass: string]: boolean } {

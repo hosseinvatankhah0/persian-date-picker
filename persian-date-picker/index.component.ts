@@ -218,9 +218,9 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     };
     this.inlineConfig = {
       ...this.config,
-      hideInputContainer: true,
-      openOnClick: false,
-      openOnFocus: false,
+      hideInputContainer: false,
+      openOnClick: true,
+      openOnFocus: true,
     };
     this.cdr.markForCheck();
   }

@@ -15,6 +15,21 @@
     [theme]="theme() || ''">
 </dp-calendar-nav>
 
+@if (showYearSelector()) {
+  <div class="dp-year-selector-overlay">
+    <div class="dp-year-selector-list">
+      @for (year of yearRange(); track year) {
+        <button (click)="selectYear(year)"
+                [class.dp-year-selected]="isCurrentYear(year)"
+                class="dp-year-btn"
+                type="button">
+          {{ year }}
+        </button>
+      }
+    </div>
+  </div>
+}
+
 <div class="dp-month-calendar-container" [ngClass]="{'rtl': isFarsi()}">
   @for (row of yearMonths(); track row) {
     <div class="dp-months-row">
