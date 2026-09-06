@@ -302,7 +302,10 @@ export class DayCalendarComponent implements OnInit, ControlValueAccessor, Valid
   }
 
   goToCurrent() {
-    this.currentDateView.set(moment().locale(this.componentConfig().locale || 'fa'));
+    const today = moment().locale(this.componentConfig().locale || 'fa');
+    this.currentDateView.set(today.clone());
+    // Select today, not just navigate to it
+    this.dayClicked({date: today, selected: false});
     this.onGoToCurrent.emit();
   }
 

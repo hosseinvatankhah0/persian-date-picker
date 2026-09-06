@@ -117,6 +117,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   dayTimeCalendarRef = viewChild<DayTimeCalendarComponent>('daytimeCalendar');
   timeSelectRef = viewChild<TimeSelectComponent>('timeSelect');
   inputElementLabel = viewChild<ElementRef>('inputElementLabel');
+  dialogElement = viewChild<ElementRef>('dialog');
 
   // Signals for state
   isInitialized = signal(false);
@@ -277,10 +278,17 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
       const target = event.target as HTMLElement;
       const label = this.inputElementLabel();
       const container = this.calendarContainer();
+      const dialog = this.dialogElement();
 
       const isInputOrLabel = label?.nativeElement?.contains(target);
       const isDialogContainer = container?.nativeElement?.contains(target);
       const isButton = target.tagName === 'BUTTON';
+
+      // Click on the backdrop itself closes the modal
+      if (dialog?.nativeElement && target === dialog.nativeElement) {
+        this.closeModal();
+        return;
+      }
 
       if (!isDialogContainer && !isInputOrLabel && !isButton) {
         this.closeModal();

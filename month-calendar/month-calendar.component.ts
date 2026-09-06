@@ -275,7 +275,16 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
   }
 
   goToCurrent() {
-    this.currentDateView.set(moment().locale(this.componentConfig().locale || 'fa'));
+    const config = this.componentConfig();
+    const now = moment().locale(config.locale || 'fa');
+    this.currentDateView.set(now.clone());
+    // Select the current month, not just navigate to it
+    this.monthClicked({
+      date: now.clone().startOf('month'),
+      selected: false,
+      currentMonth: true,
+      text: this.monthCalendarService.getMonthBtnText(config, now)
+    });
     this.onGoToCurrent.emit();
   }
 

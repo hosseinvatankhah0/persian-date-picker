@@ -1,6 +1,6 @@
 {
   "name": "persian-date-picker",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A modern, standalone Jalali (Persian) date picker modal for Angular 22 — with day/month/time/daytime modes, RTL support, and ControlValueAccessor integration.",
   "keywords": [
     "angular",
