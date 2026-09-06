@@ -283,6 +283,7 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
       date: now.clone().startOf('month'),
       selected: false,
       currentMonth: true,
+      disabled: false,
       text: this.monthCalendarService.getMonthBtnText(config, now)
     });
     this.onGoToCurrent.emit();
