@@ -63,11 +63,11 @@ import {CommonModule} from '@angular/common';
 })
 export class DayTimeCalendarComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
-  @Input() config: IDayTimeCalendarConfig;
-  @Input() displayDate: SingleCalendarValue;
-  @Input() minDate: SingleCalendarValue;
-  @Input() maxDate: SingleCalendarValue;
-  @HostBinding('class') @Input() theme: string;
+  @Input() config?: IDayTimeCalendarConfig;
+  @Input() displayDate?: SingleCalendarValue;
+  @Input() minDate?: SingleCalendarValue;
+  @Input() maxDate?: SingleCalendarValue;
+  @HostBinding('class') @Input() theme?: string;
 
   @Output() onChange: EventEmitter<IDate> = new EventEmitter();
   @Output() onGoToCurrent: EventEmitter<void> = new EventEmitter();

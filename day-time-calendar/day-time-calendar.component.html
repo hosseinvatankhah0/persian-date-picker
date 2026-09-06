@@ -6,12 +6,12 @@
                  [config]="componentConfig"
                  [displayDate]="displayDate"
                  [ngModel]="_selected"
-                 [theme]="theme">
+                 [theme]="theme || ''">
 </dp-day-calendar>
 <dp-time-select #timeSelect
                 (onChange)="timeChange($event)"
                 (onConfirm)="timeConfirm($event)"
                 [config]="componentConfig"
                 [ngModel]="_selected"
-                [theme]="theme">
+                [theme]="theme || ''">
 </dp-time-select>

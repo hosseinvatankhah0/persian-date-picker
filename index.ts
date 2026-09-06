@@ -19,3 +19,4 @@ export {MonthCalendarComponent} from './month-calendar/month-calendar.component'
 export {TimeSelectComponent} from './time-select/time-select.component';
 export {DayTimeCalendarComponent} from './day-time-calendar/day-time-calendar.component';
 export {CalendarNavComponent} from './calendar-nav/calendar-nav.component';
+export {PersianDatePickerComponent} from './persian-date-picker/index.component';

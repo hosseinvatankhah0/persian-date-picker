@@ -1,0 +1,71 @@
+<div class="persian-date-picker-wrapper" [class.disabled]="disabled">
+  @if (pickerType === 'modal') {
+    <dp-date-picker-modal
+        (ngModelChange)="onModelChange($event)"
+        [config]="config"
+        [disabled]="disabled"
+        [maxDate]="normalizedMaxDate"
+        [maxTime]="maxTime"
+        [minDate]="normalizedMinDate"
+        [minTime]="minTime"
+        [mode]="mode"
+        [fontSize]="fontSize"
+        [ngModel]="dateObject"
+        [ngModelOptions]="{ standalone: true }"
+        [placeholder]="placeholder"
+        [required]="required"
+        class="custom-date-picker"
+        dir="ltr"
+        theme="dp-material">
+    </dp-date-picker-modal>
+    @if (dateObject) {
+      <span
+          class="remove-icon"
+          [class.disabled]="disabled"
+          (click)="!disabled && clearDate($event)">
+        <i class="far fa-times"></i>
+      </span>
+    }
+  } @else {
+    <div class="inline-calendar-container">
+      @switch (mode) {
+        @case ('day') {
+          <dp-day-calendar
+              (onSelect)="onModelChange($event)"
+              [config]="config"
+              [maxDate]="normalizedMaxDate"
+              [minDate]="normalizedMinDate"
+              [ngModel]="dateObject"
+              theme="dp-material">
+          </dp-day-calendar>
+        }
+        @case ('month') {
+          <dp-month-calendar
+              (onSelect)="onModelChange($event)"
+              [config]="config"
+              [ngModel]="dateObject"
+              theme="dp-material">
+          </dp-month-calendar>
+        }
+        @case ('time') {
+          <dp-time-select
+              (onChange)="onModelChange($event)"
+              [config]="config"
+              [ngModel]="dateObject"
+              theme="dp-material">
+          </dp-time-select>
+        }
+        @case ('daytime') {
+          <dp-day-time-calendar
+              (onChange)="onModelChange($event)"
+              [config]="config"
+              [maxDate]="normalizedMaxDate"
+              [minDate]="normalizedMinDate"
+              [ngModel]="dateObject"
+              theme="dp-material">
+          </dp-day-time-calendar>
+        }
+      }
+    </div>
+  }
+</div>
