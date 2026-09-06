@@ -1,5 +1,5 @@
 <div class="persian-date-picker-wrapper" [class.disabled]="disabled">
-  @if (pickerType === 'modal') {
+  <ng-container *ngIf="pickerType === 'modal'">
     <dp-date-picker-modal
         (ngModelChange)="onModelChange($event)"
         [config]="config"
@@ -18,15 +18,15 @@
         dir="ltr"
         theme="dp-material">
    </dp-date-picker-modal>
-    @if (dateObject) {
-      <span
-          class="remove-icon"
-          [class.disabled]="disabled"
-          (click)="!disabled && clearDate($event)">
-        <i class="far fa-times</i>
-     </span>
-    }
-  } @else {
+    <span *ngIf="dateObject"
+        class="remove-icon"
+        [class.disabled]="disabled"
+        (click)="!disabled && clearDate($event)">
+      <i class="far fa-times"></i>
+   </span>
+ </ng-container>
+
+  <ng-container *ngIf="pickerType === 'inline'">
     <dp-date-picker-modal
         (ngModelChange)="onModelChange($event)"
         [config]="inlineConfig"
@@ -45,13 +45,11 @@
         dir="ltr"
         theme="dp-material">
    </dp-date-picker-modal>
-    @if (dateObject) {
-      <span
-          class="remove-icon inline-remove"
-          [class.disabled]="disabled"
-          (click)="!disabled && clearDate($event)">
-        <i class="far fa-times</i>
-     </span>
-    }
-  }
+    <span *ngIf="dateObject"
+        class="remove-icon inline-remove"
+        [class.disabled]="disabled"
+        (click)="!disabled && clearDate($event)">
+      <i class="far fa-times"></i>
+   </span>
+ </ng-container>
 </div>
