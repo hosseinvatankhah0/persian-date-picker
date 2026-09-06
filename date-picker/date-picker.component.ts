@@ -313,6 +313,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
   showCalendars() {
     this.hideStateHelper = true;
+    this.isModalOpen.set(true);
     const timeRef = this.timeSelectRef();
     if (timeRef) {
       timeRef.api.triggerChange();

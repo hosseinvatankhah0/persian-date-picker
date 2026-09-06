@@ -15,10 +15,6 @@ import {
 } from '@angular/core';
 import moment, { Moment } from 'jalali-moment';
 import { DatePickerModalComponent } from '../date-picker/date-picker.component';
-import { DayCalendarComponent } from '../day-calendar/day-calendar.component';
-import { MonthCalendarComponent } from '../month-calendar/month-calendar.component';
-import { TimeSelectComponent } from '../time-select/time-select.component';
-import { DayTimeCalendarComponent } from '../day-time-calendar/day-time-calendar.component';
 import { CommonModule } from '@angular/common';
 
 export const PERSIAN_DATE_PICKER_VALUE_ACCESSOR: any = {
@@ -35,10 +31,6 @@ export const PERSIAN_DATE_PICKER_VALUE_ACCESSOR: any = {
   imports: [
     CommonModule,
     DatePickerModalComponent,
-    DayCalendarComponent,
-    MonthCalendarComponent,
-    TimeSelectComponent,
-    DayTimeCalendarComponent,
     FormsModule
   ],
   providers: [PERSIAN_DATE_PICKER_VALUE_ACCESSOR]
@@ -48,6 +40,8 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
 
   dateObject: Moment | null = null;
   config: any = {};
+  inlineConfig: any = {};
+  standaloneNgModelOptions = { standalone: true };
   isKeRemoving = false;
 
   @Input() minDate: Moment | string = moment().locale('en').add(-100, 'years');
@@ -221,6 +215,12 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     this.config = {
       showMultipleYearsNavigation: true,
       format,
+    };
+    this.inlineConfig = {
+      ...this.config,
+      hideInputContainer: true,
+      openOnClick: false,
+      openOnFocus: false,
     };
     this.cdr.markForCheck();
   }
