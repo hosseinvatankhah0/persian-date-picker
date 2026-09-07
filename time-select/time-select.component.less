@@ -1,62 +1,94 @@
 @import '../common/styles/variables';
 
 & {
-  .dp-time-btn {
-    padding: 6px 8px;
-    border: 1px solid #ddd;
-    background: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-  }
-
-  .dp-time-btn:hover {
-    background: #f5f5f5;
-  }
-
-
   dp-time-select {
     display: inline-block;
+    padding: 16px;
 
     .dp-time-select-controls {
       margin: 0;
       padding: 0;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
       line-height: normal;
       background: @c-white;
     }
 
     .dp-time-select-control {
-      display: inline-block;
-      //width: 35px;
-      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
       vertical-align: middle;
       font-size: inherit;
       letter-spacing: 1px;
     }
 
-    .dp-time-select-control-up, .dp-time-select-control-down {
-      position: relative;
-      display: block;
-      width: 24px;
-      height: 24px;
-      margin: 3px auto;
-      cursor: pointer;
-      color: @c-light-gray;
-      .arrow(0deg)
-    }
-
-    .dp-time-select-control-up::before {
-      transform: rotate(-45deg);
-      top: 4px;
-    }
-
-    .dp-time-select-control-down::before {
-      transform: rotate(135deg);
+    .dp-time-select-display-hours,
+    .dp-time-select-display-minutes,
+    .dp-time-select-display-seconds,
+    .dp-time-select-display-meridiem {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      font-size: 26px;
+      font-weight: 500;
+      color: #202124;
+      background: #f8f9fa;
+      border-radius: 12px;
+      box-sizing: border-box;
     }
 
     .dp-time-select-separator {
-      width: 5px;
+      width: auto;
+      font-size: 26px;
+      font-weight: 500;
+      color: #5f6368;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dp-time-select-control-up, .dp-time-select-control-down {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 32px;
+      margin: 0;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      transition: background 0.15s ease;
+
+      &:hover:not(:disabled) {
+        background: #e8f0fe;
+      }
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+    }
+
+    .dp-time-select-control-up::before,
+    .dp-time-select-control-down::before {
+      left: 0;
+    }
+
+    .dp-time-select-control-up {
+      .arrow(-45deg);
+    }
+
+    .dp-time-select-control-down {
+      .arrow(135deg);
     }
 
     &.dp-material {
@@ -65,17 +97,37 @@
         background: transparent;
         border: none;
         outline: none;
-        border-radius: 50%;
 
         &::before {
           left: 0;
         }
 
-        &:hover {
-          background: @c-light-gray;
-          color: @c-white;
+        &:hover:not(:disabled) {
+          background: #e8f0fe;
         }
       }
+    }
+  }
+
+  .dp-time-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 16px;
+    border-top: 1px solid #f0f0f0;
+
+    .dp-time-btn {
+      border: none;
+      background: @c-primary-solid;
+      color: #fff;
+      font: inherit;
+      cursor: pointer;
+      min-height: 36px;
+      padding: 0 18px;
+      border-radius: 8px;
+      transition: background 0.15s ease;
+
+      &:hover { background: darken(@c-primary-solid, 8%); }
+      &:focus-visible { outline: 2px solid @c-primary-solid; }
     }
   }
 }

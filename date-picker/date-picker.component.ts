@@ -481,6 +481,16 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     this.cd.markForCheck();
   }
 
+  confirmModal(): void {
+    const selectedMoments = this.selected();
+    if (selectedMoments && selectedMoments.length) {
+      const val = this.processOnChangeCallback(selectedMoments);
+      this.onChangeCallback(val, false);
+      this.onChange.emit(val);
+    }
+    this.closeModal();
+  }
+
   transformToJalali(value: any, toFormat = 'jYYYY/jMM/jDD'): string {
     if (!value) return '';
     return momentNs(value).format(toFormat);

@@ -89,13 +89,14 @@
                               [theme]="theme()"
                               opens="left">
         </dp-day-time-calendar>
-        @if (!componentConfig().hideInputContainer) {
         <div class="dp-picker-actions">
-          <button type="button" (click)="closeModal()">
+          <button type="button" class="dp-btn-confirm" (click)="confirmModal()">
+            {{ componentConfig().locale === 'fa' ? 'تایید' : 'Confirm' }}
+          </button>
+          <button type="button" class="dp-btn-close" (click)="closeModal()">
             {{ componentConfig().locale === 'fa' ? 'بستن' : 'Close' }}
           </button>
         </div>
-        }
       </div>
     </div>
     }
