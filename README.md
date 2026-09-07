@@ -29,7 +29,7 @@ Run `npm run test:navigation` for focused calendar regression tests and
 Ensure you have `jalali-moment` installed in your project:
 
 ```bash
-npm install jalali-moment
+npm install persian-date-picker-angular jalali-moment
 ```
 
 ## Usage
@@ -38,7 +38,7 @@ Import `PersianDatePickerComponent` into your standalone component or Angular mo
 
 ```typescript
 import { Component } from '@angular/core';
-import { PersianDatePickerComponent } from 'persian-date-picker';
+import { PersianDatePickerComponent } from 'persian-date-picker-angular';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
