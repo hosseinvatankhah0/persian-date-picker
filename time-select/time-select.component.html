@@ -1,7 +1,4 @@
 <ul class="dp-time-select-controls">
-  <li class="dp-time-select-control">
-    <button class="dp-time-btn" (click)="confirmSelection()">تایید</button>
-  </li>
   <li class="dp-time-select-control dp-time-select-control-hours">
     <button (click)="increase('hour')"
             [disabled]="!showIncHour"
@@ -63,3 +60,8 @@
             type="button"></button>
   </li>
 </ul>
+<div class="dp-time-actions">
+  <button type="button" class="dp-time-btn" (click)="confirmSelection()">
+    {{ componentConfig.locale === 'fa' ? 'تأیید' : 'Set' }}
+  </button>
+</div>

@@ -1,5 +1,27 @@
 @import '../common/styles/variables';
 
+dp-date-picker-modal .dp-picker-actions,
+dp-time-select .dp-time-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 16px;
+  border-top: 1px solid @c-light-gray;
+
+  button {
+    border: none;
+    background: transparent;
+    color: @c-primary-solid;
+    font: inherit;
+    cursor: pointer;
+    min-height: 36px;
+    padding: 0 16px;
+    border-radius: 6px;
+
+    &:hover { background: #e8f0fe; }
+    &:focus-visible { outline: 2px solid @c-primary-solid; }
+  }
+}
+
 & {
   dp-date-picker, dp-date-picker-modal {
     display: flex;
@@ -31,7 +53,7 @@
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
     border: none;
     border-radius: 12px;
-    z-index: 9999999999999999;
+    z-index: 1;
     white-space: nowrap;
     transform: translateX(-50%);
     left: 50%;

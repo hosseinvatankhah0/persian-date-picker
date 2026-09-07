@@ -12,7 +12,7 @@ export class MonthCalendarService {
     allowMultiSelect: false,
     yearFormat: 'YYYY',
     format: 'MMMM-YYYY',
-    isNavHeaderBtnClickable: false,
+    isNavHeaderBtnClickable: true,
     monthBtnFormat: 'MMMM',
     locale: 'fa',
     multipleYearsNavigateBy: 10,
@@ -41,11 +41,11 @@ export class MonthCalendarService {
   }
 
   generateYear(config: IMonthCalendarConfig, year: Moment, selected: Moment[] = []): IMonth[][] {
-    const index = year.clone().startOf('year');
+    const index = year.clone().locale(config.locale || 'fa').startOf('year');
     const safeSelected = selected || [];
 
-    return this.utilsService.createArray(3).map(() => {
-      return this.utilsService.createArray(4).map(() => {
+    return this.utilsService.createArray(4).map(() => {
+      return this.utilsService.createArray(3).map(() => {
         const date = index.clone();
         const month = {
           date,
@@ -74,10 +74,9 @@ export class MonthCalendarService {
     const locale = config.locale || 'fa';
     const years: number[] = [];
     const current = currentYear.clone().locale(locale);
-    const minYear = config.min ? momentNs(config.min).locale(locale).year() : current.year() - 100;
-    const maxYear = config.max ? momentNs(config.max).locale(locale).year() : current.year() + 50;
-    for (let y = minYear; y <= maxYear; y++) {
-      years.push(y);
+    const startYear = Math.floor(current.year() / 21) * 21;
+    for (let year = startYear; year < startYear + 21; year++) {
+      years.push(year);
     }
     return years;
   }

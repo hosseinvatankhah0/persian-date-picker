@@ -4,6 +4,15 @@
   dp-calendar-nav {
     @navHeight: 40px;
 
+    [hidden] {
+      display: none !important;
+    }
+
+    button:focus-visible {
+      outline: 2px solid @c-primary-solid !important;
+      outline-offset: 2px;
+    }
+
     .dp-calendar-nav-container {
       position: relative;
       box-sizing: border-box;

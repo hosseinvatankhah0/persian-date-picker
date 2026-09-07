@@ -9,9 +9,10 @@
         [placeholder]="placeholder()"
         [readonly]="componentConfig().disableKeypress"
         class="dp-picker-input"
-        id="dp"
+        [id]="inputId"
+        [attr.aria-label]="placeholder() || (componentConfig().locale === 'fa' ? 'انتخاب تاریخ' : 'Choose date')"
         type="text"/>
-    <span #inputElementLabel (click)="inputFocused()" for="dp" class="datepicker-button" [class.disabled]="disabled()">
+    <span #inputElementLabel (click)="inputFocused()" class="datepicker-button" [class.disabled]="disabled()">
             <i class="fa-duotone fa-calendar datepicker-icon" [style.fontSize.px]="fontSize()" aria-hidden="true"></i>
         </span>
     @if (showMinDateIsNotValid()) {
@@ -30,8 +31,9 @@
   </div>
   <div #dialog
       class="kendo-datepicker-dialog"
-      [hidden]="!isModalOpen()">
-    <div #container>
+      [hidden]="!isModalOpen() && !componentConfig().hideInputContainer">
+    @if (isModalOpen() || componentConfig().hideInputContainer) {
+    <div #container (keydown.escape)="closeModal(); $event.stopPropagation()">
       <div
           [ngSwitch]="mode()"
           class="dp-popup {{theme()}}">
@@ -43,7 +45,7 @@
                          (onSelect)="dateSelected($event, 'day')"
                          *ngSwitchCase="'day'"
                          [config]="dayCalendarConfig()"
-                         [displayDate]="displayDate()"
+                         [displayDate]="currentDateView()"
                          [maxDate]="maxDate()"
                          [minDate]="minDate()"
                          [ngModel]="selected()"
@@ -58,14 +60,14 @@
                            (onSelect)="dateSelected($event, 'month')"
                            *ngSwitchCase="'month'"
                            [config]="dayCalendarConfig()"
-                           [displayDate]="displayDate()"
+                           [displayDate]="currentDateView()"
                            [ngModel]="selected()"
                            [theme]="theme()"
                            opens="left">
         </dp-month-calendar>
 
         <dp-time-select #timeSelect
-                        (onChange)="dateSelected($event, 'second', true)"
+                        (onConfirm)="dateSelected({date: $event.date, selected: false}, 'second', true)"
                         *ngSwitchCase="'time'"
                         [config]="timeSelectConfig()"
                         [ngModel]="selected() && selected()[0]"
@@ -80,14 +82,22 @@
                               (onRightNav)="onRightNavClick($event)"
                               *ngSwitchCase="'daytime'"
                               [config]="dayTimeCalendarConfig()"
-                              [displayDate]="displayDate()"
+                              [displayDate]="currentDateView()"
                               [maxDate]="maxDate()"
                               [minDate]="minDate()"
                               [ngModel]="selected() && selected()[0]"
                               [theme]="theme()"
                               opens="left">
         </dp-day-time-calendar>
+        @if (!componentConfig().hideInputContainer) {
+        <div class="dp-picker-actions">
+          <button type="button" (click)="closeModal()">
+            {{ componentConfig().locale === 'fa' ? 'بستن' : 'Close' }}
+          </button>
+        </div>
+        }
       </div>
     </div>
+    }
   </div>
 </div>

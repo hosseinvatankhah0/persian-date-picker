@@ -120,7 +120,7 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     }
 
     if (moment.isMoment(obj)) {
-      return obj.isValid() ? obj : null;
+      return obj.isValid() ? obj.clone().locale(this.locale) : null;
     }
 
     if (obj instanceof Date) {
@@ -152,7 +152,7 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     ].filter(Boolean);
 
     for (const fmt of jalaliFormats) {
-      const m = moment.from(value, 'fa', fmt);
+      const m = moment.from(value, this.locale, fmt);
       if (m.isValid()) {
         return m;
       }
@@ -205,7 +205,7 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
         format = 'YYYY/MM/DD HH:mm:ss';
         break;
       case 'month':
-        format = 'jYYYY/jMM';
+        format = this.locale === 'fa' ? 'jYYYY/jMM' : 'YYYY/MM';
         break;
       case 'time':
         format = 'HH:mm:ss';
@@ -213,12 +213,14 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     }
 
     this.config = {
+      locale: this.locale,
+      unSelectOnClick: false,
       showMultipleYearsNavigation: true,
       format,
     };
     this.inlineConfig = {
       ...this.config,
-      hideInputContainer: false,
+      hideInputContainer: true,
       openOnClick: true,
       openOnFocus: true,
     };
@@ -234,6 +236,7 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     event.stopPropagation();
     this.dateObject = null;
     this.onChange('');
+    this.inputModelChange.emit('');
     this.onTouched();
     this.cdr.markForCheck();
   }

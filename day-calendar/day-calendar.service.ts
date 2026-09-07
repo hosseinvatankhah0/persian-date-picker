@@ -16,7 +16,7 @@ export class DayCalendarService {
     firstDayOfWeek: 'sa',
     weekDayFormat: 'dd',
     format: 'YYYY/M/D',
-    monthFormat: 'MMMM YY',
+    monthFormat: 'MMMM YYYY',
     dayBtnFormat: 'D',
     allowMultiSelect: false,
     enableMonthSelector: true,

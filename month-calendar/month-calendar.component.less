@@ -4,10 +4,13 @@
   dp-month-calendar {
     display: inline-block;
     position: relative;
+    width: 284px;
 
     .dp-month-calendar-container {
       background: @c-white;
       padding: 12px 16px;
+      min-height: 252px;
+      box-sizing: border-box;
 
       &.rtl {
         direction: rtl;
@@ -16,14 +19,14 @@
 
     .dp-months-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 6px;
     }
 
     .dp-calendar-month {
       box-sizing: border-box;
       width: 100%;
-      height: 42px;
+      height: 54px;
       cursor: pointer;
       font-size: 13px;
       border-radius: 20px;
@@ -62,11 +65,7 @@
     }
 
     .dp-year-selector-overlay {
-      position: absolute;
-      top: 40px;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      position: relative;
       background: @c-white;
       z-index: 10;
       overflow: hidden;
@@ -74,8 +73,7 @@
     }
 
     .dp-year-selector-list {
-      height: 200px;
-      overflow-y: auto;
+      min-height: 252px;
       padding: 8px;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -110,6 +108,16 @@
           background: darken(@c-primary-solid, 8%);
         }
       }
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+    }
+
+    button:focus-visible {
+      outline: 2px solid @c-primary-solid;
+      outline-offset: -2px;
     }
   }
 }

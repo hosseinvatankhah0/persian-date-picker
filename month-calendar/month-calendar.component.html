@@ -6,12 +6,12 @@
     (onRightNav)="onRightNavClick()"
     (onRightSecondaryNav)="onRightSecondaryNavClick()"
     [isLabelClickable]="componentConfig().isNavHeaderBtnClickable || false"
-    [label]="navLabel()"
+    [label]="showYearSelector() ? yearRange()[0] + ' – ' + yearRange()[20] : navLabel()"
     [showGoToCurrent]="shouldShowCurrent()"
-    [showLeftNav]="showLeftNav()"
-    [showRightNav]="showRightNav()"
-    [showLeftSecondaryNav]="showSecondaryLeftNav()"
-    [showRightSecondaryNav]="showSecondaryRightNav()"
+    [showLeftNav]="showYearSelector() ? !isYearDisabled(yearRange()[0] - 1) : showLeftNav()"
+    [showRightNav]="showYearSelector() ? !isYearDisabled(yearRange()[20] + 1) : showRightNav()"
+    [showLeftSecondaryNav]="!showYearSelector() && showSecondaryLeftNav()"
+    [showRightSecondaryNav]="!showYearSelector() && showSecondaryRightNav()"
     [theme]="theme() || ''">
 </dp-calendar-nav>
 
@@ -20,6 +20,8 @@
     <div class="dp-year-selector-list">
       @for (year of yearRange(); track year) {
         <button (click)="selectYear(year)"
+                [disabled]="isYearDisabled(year)"
+                [attr.aria-pressed]="isCurrentYear(year)"
                 [class.dp-year-selected]="isCurrentYear(year)"
                 class="dp-year-btn"
                 type="button">
@@ -30,12 +32,14 @@
   </div>
 }
 
+@if (!showYearSelector()) {
 <div class="dp-month-calendar-container" [ngClass]="{'rtl': isFarsi()}">
   @for (row of yearMonths(); track row) {
     <div class="dp-months-row">
       @for (month of row; track month.date.valueOf()) {
         <button (click)="monthClicked(month)"
                 [disabled]="month.disabled"
+                [attr.aria-pressed]="month.selected"
                 [innerText]="month.text"
                 [ngClass]="getMonthBtnCssClass(month)"
                 class="dp-calendar-month"
@@ -45,3 +49,4 @@
     </div>
   }
 </div>
+}

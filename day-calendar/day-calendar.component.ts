@@ -9,6 +9,7 @@ import {
   forwardRef,
   HostBinding,
   input,
+  OnChanges,
   OnInit,
   output,
   signal,
@@ -64,7 +65,7 @@ const moment = momentNs;
     }
   ]
 })
-export class DayCalendarComponent implements OnInit, ControlValueAccessor, Validator {
+export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
   // Inputs (Signals)
   config = input<IDayCalendarConfig>();
   displayDate = input<SingleCalendarValue>();
@@ -94,7 +95,11 @@ export class DayCalendarComponent implements OnInit, ControlValueAccessor, Valid
   currentDateView = signal<Moment>(moment());
 
   // Computed values
-  componentConfig = computed(() => this.dayCalendarService.getConfig(this.config() || {}));
+  componentConfig = computed(() => this.dayCalendarService.getConfig({
+    ...this.config(),
+    min: this.minDate() || this.config()?.min,
+    max: this.maxDate() || this.config()?.max
+  }));
   monthCalendarConfig = computed(() => this.dayCalendarService.getMonthCalendarConfig(this.componentConfig()));
 
   weeks = computed(() => this.dayCalendarService.generateMonthArray(this.componentConfig(), this.currentDateView(), this.selected()));
@@ -131,6 +136,10 @@ export class DayCalendarComponent implements OnInit, ControlValueAccessor, Valid
     this.initValidators();
   }
 
+  ngOnChanges() {
+    if (this.isInited()) this.init();
+  }
+
   init() {
     const config = this.componentConfig();
     const currentView = this.currentDateView();
@@ -159,7 +168,6 @@ export class DayCalendarComponent implements OnInit, ControlValueAccessor, Valid
       config.locale || 'fa'
     );
 
-    this.onChangeCallback(this.processOnChangeCallback(this.selected()));
   }
 
   writeValue(value: CalendarValue): void {
@@ -207,12 +215,14 @@ export class DayCalendarComponent implements OnInit, ControlValueAccessor, Valid
   }
 
   dayClicked(day: IDay) {
+    if (day.disabled) return;
     if (day.selected && !this.componentConfig().unSelectOnClick) {
       return;
     }
 
     const nextSelected = this.utilsService.updateSelected(!!this.componentConfig().allowMultiSelect, this.selected(), day);
     this.selected.set(nextSelected);
+    this.onChangeCallback(this.processOnChangeCallback(nextSelected));
     this.onSelect.emit(day);
   }
 

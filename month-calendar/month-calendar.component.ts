@@ -7,6 +7,7 @@ import {
   forwardRef,
   HostBinding,
   input,
+  OnChanges,
   OnInit,
   output,
   signal,
@@ -60,7 +61,7 @@ const moment = momentNs;
     }
   ]
 })
-export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Validator {
+export class MonthCalendarComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
   config = input<IMonthCalendarConfig>();
   displayDate = input<Moment>();
   minDate = input<Moment>();
@@ -84,7 +85,11 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
   currentDateView = signal<Moment>(moment());
   showYearSelector = signal(false);
 
-  componentConfig = computed(() => this.monthCalendarService.getConfig(this.config() || {}));
+  componentConfig = computed(() => this.monthCalendarService.getConfig({
+    ...this.config(),
+    min: this.minDate() || this.config()?.min,
+    max: this.maxDate() || this.config()?.max
+  }));
   yearMonths = computed(() => this.monthCalendarService.generateYear(this.componentConfig(), this.currentDateView(), this.selected()));
 
   navLabel = computed(() => this.monthCalendarService.getHeaderLabel(this.componentConfig(), this.currentDateView()));
@@ -120,13 +125,17 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
     this.initValidators();
   }
 
+  ngOnChanges() {
+    if (this.isInited()) this.init();
+  }
+
   init() {
     const config = this.componentConfig();
     const currentView = this.currentDateView();
     const selected = this.selected();
 
     const nextView = this.displayDate()
-      ? this.displayDate()!.clone()
+      ? this.displayDate()!.clone().locale(config.locale || 'fa')
       : this.utilsService.getDefaultDisplayDate(
           currentView,
           selected,
@@ -139,6 +148,7 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
   }
 
   writeValue(value: CalendarValue): void {
+    this.inputValue = value;
     if (value) {
       const config = this.componentConfig();
       const selectedArr = this.utilsService.convertToMomentArray(
@@ -148,6 +158,9 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
         config.locale || 'fa'
       );
       this.selected.set(selectedArr);
+      if (selectedArr.length && !this.displayDate()) {
+        this.currentDateView.set(selectedArr[0].clone());
+      }
       this.inputValueType = this.utilsService.getInputType(value, !!config.allowMultiSelect);
     } else {
       this.selected.set([]);
@@ -178,7 +191,6 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
       'month',
       config.locale || 'fa'
     );
-    this.onChangeCallback(this.processOnChangeCallback(this.selected()));
   }
 
   processOnChangeCallback(value: Moment[]): CalendarValue {
@@ -192,18 +204,20 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
   }
 
   monthClicked(month: IMonth) {
+    if (month.disabled) return;
     if (month.selected && !this.componentConfig().unSelectOnClick) {
       return;
     }
 
     const nextSelected = this.utilsService.updateSelected(!!this.componentConfig().allowMultiSelect, this.selected(), month, 'month');
     this.selected.set(nextSelected);
+    this.onChangeCallback(this.processOnChangeCallback(nextSelected));
     this.onSelect.emit(month);
   }
 
   onLeftNavClick() {
     const from = this.currentDateView().clone();
-    this.currentDateView.set(this.currentDateView().clone().subtract(1, 'year'));
+    this.currentDateView.set(this.currentDateView().clone().startOf('month').subtract(this.showYearSelector() ? 21 : 1, 'year'));
     const to = this.currentDateView().clone();
     this.onLeftNav.emit({from, to});
   }
@@ -224,7 +238,7 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
 
   onRightNavClick() {
     const from = this.currentDateView().clone();
-    this.currentDateView.set(this.currentDateView().clone().add(1, 'year'));
+    this.currentDateView.set(this.currentDateView().clone().startOf('month').add(this.showYearSelector() ? 21 : 1, 'year'));
     const to = this.currentDateView().clone();
     this.onRightNav.emit({from, to});
   }
@@ -248,9 +262,10 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
   }
 
   selectYear(year: number) {
+    if (this.isYearDisabled(year)) return;
     const config = this.componentConfig();
     const locale = config.locale || 'fa';
-    const newDate = this.currentDateView().clone().locale(locale).year(year);
+    const newDate = this.currentDateView().clone().locale(locale).startOf('month').year(year);
     this.currentDateView.set(newDate);
     this.showYearSelector.set(false);
     this.cd.markForCheck();
@@ -258,6 +273,13 @@ export class MonthCalendarComponent implements OnInit, ControlValueAccessor, Val
 
   isCurrentYear(year: number): boolean {
     return this.currentDateView().year() === year;
+  }
+
+  isYearDisabled(year: number): boolean {
+    const config = this.componentConfig();
+    const date = this.currentDateView().clone().locale(config.locale || 'fa').startOf('year').year(year);
+    return !!((config.min && date.isBefore(config.min, 'year')) ||
+      (config.max && date.isAfter(config.max, 'year')));
   }
 
   getMonthBtnCssClass(month: IMonth): { [klass: string]: boolean } {

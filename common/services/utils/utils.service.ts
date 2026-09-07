@@ -38,7 +38,7 @@ export class UtilsService {
     if (!date) {
       m = null;
     } else if (typeof date === 'string') {
-      m = moment(date, format);
+      m = moment.from(date, locale || 'fa', format);
     } else {
       m = date.clone();
     }
@@ -61,16 +61,12 @@ export class UtilsService {
                         minDate?: Moment,
                         locale?: string): Moment {
     let m = moment();
-    if (current) {
+    if (selected && selected.length) {
+      m = selected[allowMultiSelect ? selected.length - 1 : 0].clone();
+    } else if (current) {
       m = current.clone();
     } else if (minDate && minDate.isAfter(moment())) {
       m = minDate.clone();
-    } else if (allowMultiSelect) {
-      if (selected && selected.length && selected[selected.length - 1]) {
-        m = selected[selected.length - 1].clone();
-      }
-    } else if (selected && selected[0]) {
-      m = selected[0].clone();
     }
     if (locale) {
       m.locale(locale);

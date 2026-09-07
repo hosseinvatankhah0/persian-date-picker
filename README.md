@@ -10,6 +10,20 @@ A customizable Jalali (Persian) date and time picker component for modern Angula
 - **Date Constraints**: Easy min/max date and time boundaries.
 - **Modern Styling**: Styled with clean UI guidelines inspired by modern date-time pickers.
 
+## Calendar navigation
+
+Click the calendar heading to switch from days to months, then click the year
+heading to browse a 21-year page. Select a year, then a month to return to days.
+Month buttons use a three-column layout; months and years outside `minDate` and
+`maxDate` are disabled. Persian and English calendars use their own month boundaries.
+
+In `time` and `daytime` modes, use **Set / تأیید** to commit the time. Changing the
+time does not close the picker. Closing the modal discards unconfirmed changes.
+Inline calendars remain visible without an input or a backdrop.
+
+Run `npm run test:navigation` for focused calendar regression tests and
+`npm run build:lib` to validate Angular templates and build the package.
+
 ## Installation
 
 Ensure you have `jalali-moment` installed in your project:

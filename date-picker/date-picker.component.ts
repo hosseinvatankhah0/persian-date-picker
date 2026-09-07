@@ -85,6 +85,8 @@ const moment = momentNs;
   ]
 })
 export class DatePickerModalComponent implements OnInit, ControlValueAccessor, Validator, OnDestroy {
+  private static nextInputId = 0;
+  readonly inputId = `dp-${DatePickerModalComponent.nextInputId++}`;
   // Inputs
   config = input<IDatePickerModalConfig>();
   mode = input<CalendarMode>('day');
@@ -130,7 +132,11 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   showMaxDateIsNotValid = signal(false);
 
   // Computeds
-  componentConfig = computed(() => this.dayPickerService.getConfig(this.config() || {}, this.mode()));
+  componentConfig = computed(() => this.dayPickerService.getConfig({
+    ...this.config(),
+    min: this.minDate() || this.config()?.min,
+    max: this.maxDate() || this.config()?.max
+  }, this.mode()));
   dayCalendarConfig = computed(() => this.dayPickerService.getDayConfigService(this.componentConfig()));
   dayTimeCalendarConfig = computed(() => this.dayPickerService.getDayTimeConfigService(this.componentConfig()));
   timeSelectConfig = computed(() => this.dayPickerService.getTimeConfigService(this.componentConfig()));
@@ -200,12 +206,12 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
       this.mode(),
       config.locale || 'fa'
     );
-    this.onChangeCallback(this.processOnChangeCallback(this.selected()), false);
   }
 
   writeValue(value: CalendarValue): void {
     this.inputValue = value;
     const config = this.componentConfig();
+    this.inputValueType = this.utilsService.getInputType(value, !!config.allowMultiSelect);
 
     if (value || value === '') {
       const selectedMoments = this.utilsService.convertToMomentArray(
@@ -252,7 +258,9 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
   onChangeCallback(_: any, _changedByInput: boolean) { }
 
-  registerOnTouched(_fn: any): void { }
+  registerOnTouched(fn: () => void): void { this.onTouchedCallback = fn; }
+
+  onTouchedCallback = () => {};
 
   validate(formControl: FormControl): ValidationErrors | null {
     return this.validateFn ? this.validateFn(formControl.value) : null;
@@ -284,6 +292,8 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
       const isDialogContainer = container?.nativeElement?.contains(target);
       const isButton = target.tagName === 'BUTTON';
 
+      if (isDialogContainer) return;
+
       // Click on the backdrop itself closes the modal
       if (dialog?.nativeElement && target === dialog.nativeElement) {
         this.closeModal();
@@ -291,7 +301,12 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
       }
 
       if (!isDialogContainer && !isInputOrLabel && !isButton) {
+        if (target.tagName === 'INPUT') {
+          if (this.componentConfig().openOnClick) this.showCalendars();
+          return;
+        }
         this.closeModal();
+        return;
       }
     }
 
@@ -308,6 +323,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   }
 
   inputFocused() {
+    if (this.disabled()) return;
     if (!this.componentConfig().openOnFocus) {
       return;
     }
@@ -320,18 +336,17 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   }
 
   showCalendars() {
+    if (this.disabled() || this.isModalOpen()) return;
     this.hideStateHelper = true;
     this.isModalOpen.set(true);
-    const timeRef = this.timeSelectRef();
-    if (timeRef) {
-      timeRef.api.triggerChange();
-    }
     this.onOpen.emit();
     this.cd.markForCheck();
   }
 
   hideCalendar() {
+    if (!this.isModalOpen()) return;
     this.isModalOpen.set(false);
+    this.onTouchedCallback();
     const dayRef = this.dayCalendarRef();
     if (dayRef) {
       dayRef.api.toggleCalendarMode(ECalendarMode.Day);
@@ -405,6 +420,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   }
 
   dateSelected(date: IDate, granularity: unitOfTime.Base, _ignoreClose?: boolean) {
+    if (this.disabled() || !date.date?.isValid()) return;
     const nextSelected = this.utilsService.updateSelected(
       !!this.componentConfig().allowMultiSelect,
       this.selected(),
@@ -418,8 +434,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     this.onChangeCallback(val, false);
     this.onChange.emit(val);
 
-    this.onDateClick();
-    this.closeModal();
+    if (_ignoreClose || this.componentConfig().closeOnSelect) this.closeModal();
   }
 
   async onDateClick() {
@@ -462,7 +477,6 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   }
 
   closeModal(): void {
-    this.isModalOpen.set(false);
     this.hideCalendar();
     this.cd.markForCheck();
   }
