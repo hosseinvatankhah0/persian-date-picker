@@ -17,14 +17,14 @@
     <div class="dp-calendar-nav-container-left">
       @if (showLeftSecondaryNav()) {
         <button (click)="leftSecondaryNavClicked()"
-                aria-label="Previous years"
+                [attr.aria-label]="labels().prevYears"
                 [disabled]="leftSecondaryNavDisabled()"
                 class="dp-calendar-secondary-nav-left"
                 type="button">
         </button>
       }
       <button (click)="leftNavClicked()"
-              aria-label="Previous"
+              [attr.aria-label]="labels().prev"
               [attr.data-hidden]="!showLeftNav()"
               [disabled]="leftNavDisabled()"
               [hidden]="!showLeftNav()"
@@ -34,14 +34,14 @@
     </div>
     @if (showGoToCurrent()) {
       <button (click)="onGoToCurrent.emit()"
-              aria-label="Today"
+              [attr.aria-label]="labels().today"
               class="dp-current-location-btn"
               type="button">
       </button>
     }
     <div class="dp-calendar-nav-container-right">
       <button (click)="rightNavClicked()"
-              aria-label="Next"
+              [attr.aria-label]="labels().next"
               [attr.data-hidden]="!showRightNav()"
               [disabled]="rightNavDisabled()"
               [hidden]="!showRightNav()"
@@ -50,7 +50,7 @@
       </button>
       @if (showRightSecondaryNav()) {
         <button (click)="rightSecondaryNavClicked()"
-                aria-label="Next years"
+                [attr.aria-label]="labels().nextYears"
                 [disabled]="rightSecondaryNavDisabled()"
                 class="dp-calendar-secondary-nav-right"
                 type="button">

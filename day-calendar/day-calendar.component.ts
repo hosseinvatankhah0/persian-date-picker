@@ -93,6 +93,7 @@ export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAcce
   currentCalendarMode = signal<ECalendarMode>(ECalendarMode.Day);
   selected = signal<Moment[]>([]);
   currentDateView = signal<Moment>(moment());
+  hoveredDate = signal<Moment | null>(null);
 
   // Computed values
   componentConfig = computed(() => this.dayCalendarService.getConfig({
@@ -101,6 +102,12 @@ export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAcce
     max: this.maxDate() || this.config()?.max
   }));
   monthCalendarConfig = computed(() => this.dayCalendarService.getMonthCalendarConfig(this.componentConfig()));
+  isRangeMode = computed(() => this.componentConfig().selectionMode === 'range');
+  /** Shown between the two range clicks so the user knows what step they're on. */
+  rangeHint = computed(() => {
+    if (!this.isRangeMode() || this.selected().length !== 1) return null;
+    return this.componentConfig().locale === 'fa' ? 'تاریخ پایان بازه را انتخاب کنید' : 'Pick the end date';
+  });
 
   weeks = computed(() => this.dayCalendarService.generateMonthArray(this.componentConfig(), this.currentDateView(), this.selected()));
   weekdays = computed(() => this.dayCalendarService.generateWeekdays(this.componentConfig().firstDayOfWeek || 'sa', this.componentConfig().locale || 'fa'));
@@ -216,18 +223,49 @@ export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAcce
 
   dayClicked(day: IDay) {
     if (day.disabled) return;
-    if (day.selected && !this.componentConfig().unSelectOnClick) {
-      return;
+
+    let nextSelected: Moment[];
+    if (this.isRangeMode()) {
+      nextSelected = this.utilsService.updateSelectedRange(this.selected(), day, 'day');
+      this.hoveredDate.set(null);
+    } else {
+      if (day.selected && !this.componentConfig().unSelectOnClick) {
+        return;
+      }
+      nextSelected = this.utilsService.updateSelected(!!this.componentConfig().allowMultiSelect, this.selected(), day);
     }
 
-    const nextSelected = this.utilsService.updateSelected(!!this.componentConfig().allowMultiSelect, this.selected(), day);
     this.selected.set(nextSelected);
     this.onChangeCallback(this.processOnChangeCallback(nextSelected));
     this.onSelect.emit(day);
   }
 
+  dayHovered(day: IDay) {
+    if (!this.isRangeMode() || day.disabled) return;
+    // Only meaningful while a range is half-open.
+    if (this.selected().length === 1) {
+      this.hoveredDate.set(day.date);
+    }
+  }
+
+  clearHover() {
+    if (this.hoveredDate()) {
+      this.hoveredDate.set(null);
+    }
+  }
+
   getDayBtnText(day: IDay): string {
     return this.dayCalendarService.getDayBtnText(this.componentConfig(), day.date);
+  }
+
+  /**
+   * The visible button text is a bare number ("۱۲"); a screen reader needs the
+   * full date (weekday, day, month, year) to make sense of it out of context.
+   */
+  getDayAriaLabel(day: IDay): string {
+    const config = this.componentConfig();
+    const format = config.locale === 'fa' ? 'dddd D MMMM jYYYY' : 'dddd, MMMM D, YYYY';
+    return day.date.clone().locale(config.locale || 'fa').format(format);
   }
 
   getDayBtnCssClass(day: IDay): { [klass: string]: boolean } {
@@ -238,6 +276,16 @@ export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAcce
       'dp-next-month': !!day.nextMonth,
       'dp-current-day': !!day.currentDay
     };
+
+    if (this.isRangeMode()) {
+      const range = this.utilsService.getRangeState(day.date, this.selected(), this.hoveredDate(), 'day');
+      cssClasses['dp-range-start'] = range.isStart;
+      cssClasses['dp-range-end'] = range.isEnd;
+      cssClasses['dp-in-range'] = range.isInRange;
+      cssClasses['dp-range-preview'] = range.isPreview && range.isInRange;
+      cssClasses['dp-selected'] = range.isStart || range.isEnd;
+    }
+
     const customCssClass: string = this.dayCalendarService.getDayBtnCssClass(this.componentConfig(), day.date);
     if (customCssClass) {
       cssClasses[customCssClass] = true;
@@ -314,6 +362,14 @@ export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAcce
   goToCurrent() {
     const today = moment().locale(this.componentConfig().locale || 'fa');
     this.currentDateView.set(today.clone());
+
+    if (this.isRangeMode()) {
+      // Navigating home should not silently close a half-open range.
+      this.onGoToCurrent.emit();
+      this.cd.markForCheck();
+      return;
+    }
+
     // Select today, not just navigate to it
     this.dayClicked({date: today, selected: false});
     this.onGoToCurrent.emit();

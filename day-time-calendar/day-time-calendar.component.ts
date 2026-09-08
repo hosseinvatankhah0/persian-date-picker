@@ -178,11 +178,12 @@ export class DayTimeCalendarComponent implements OnInit, OnChanges, ControlValue
 
   dateSelected(day: IDate) {
     this.selected = this.dayTimeCalendarService.updateDay(this.selected, day.date, this.config);
-
+    this.emitChange();
   }
 
   timeChange(time: IDate) {
     this.selected = this.dayTimeCalendarService.updateTime(this.selected, time.date);
+    this.emitChange();
   }
 
   emitChange() {

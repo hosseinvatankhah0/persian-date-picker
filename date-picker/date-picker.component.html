@@ -2,27 +2,36 @@
   <div [attr.data-hidden]="componentConfig().hideInputContainer"
        [hidden]="componentConfig().hideInputContainer"
        class="dp-input-container">
+    <label class="dp-sr-only" [for]="inputId">
+      {{ placeholder() || (componentConfig().locale === 'fa' ? 'انتخاب تاریخ' : 'Choose date') }}
+    </label>
     <input
         (ngModelChange)="onViewDateChange($event)"
         [disabled]="disabled()"
         [ngModel]="inputElementValue()"
         [placeholder]="placeholder()"
         [readonly]="componentConfig().disableKeypress"
+        [attr.required]="required() ? '' : null"
         class="dp-picker-input"
         [id]="inputId"
-        [attr.aria-label]="placeholder() || (componentConfig().locale === 'fa' ? 'انتخاب تاریخ' : 'Choose date')"
         type="text"/>
-    <span #inputElementLabel (click)="inputFocused()" class="datepicker-button" [class.disabled]="disabled()">
-            <i class="fa-duotone fa-calendar datepicker-icon" [style.fontSize.px]="fontSize()" aria-hidden="true"></i>
-        </span>
+    <button #inputElementLabel
+            (click)="inputFocused()"
+            [attr.aria-label]="componentConfig().locale === 'fa' ? 'باز کردن تقویم' : 'Open calendar'"
+            [class.disabled]="disabled()"
+            [disabled]="disabled()"
+            class="datepicker-button"
+            type="button">
+      <i class="fa-duotone fa-calendar datepicker-icon" [style.fontSize.px]="fontSize()" aria-hidden="true"></i>
+    </button>
     @if (showMinDateIsNotValid()) {
-      <div class="date-error">تاریخ انتخابی نمی‌تواند از
+      <div class="date-error" role="alert">تاریخ انتخابی نمی‌تواند از
         {{ transformToJalali(minDate()) }}
         کوچکتر باشد.
       </div>
     }
     @if (showMaxDateIsNotValid()) {
-      <div class="date-error">تاریخ انتخابی نمی‌تواند از
+      <div class="date-error" role="alert">تاریخ انتخابی نمی‌تواند از
         {{ transformToJalali(maxDate()) }}
         بزرگتر باشد.
       </div>
@@ -33,7 +42,12 @@
       class="kendo-datepicker-dialog"
       [hidden]="!isModalOpen() && !componentConfig().hideInputContainer">
     @if (isModalOpen() || componentConfig().hideInputContainer) {
-    <div #container (keydown.escape)="closeModal(); $event.stopPropagation()">
+    <div #container
+         (keydown)="onContainerKeydown($event)"
+         [attr.aria-label]="dialogLabel()"
+         aria-modal="true"
+         role="dialog"
+         tabindex="-1">
       <div
           [ngSwitch]="mode()"
           class="dp-popup {{theme()}}">
@@ -67,7 +81,7 @@
         </dp-month-calendar>
 
         <dp-time-select #timeSelect
-                        (onConfirm)="dateSelected({date: $event.date, selected: false}, 'second', true)"
+                        (onChange)="pendingValueChanged($event)"
                         *ngSwitchCase="'time'"
                         [config]="timeSelectConfig()"
                         [ngModel]="selected() && selected()[0]"
@@ -76,7 +90,7 @@
         </dp-time-select>
 
         <dp-day-time-calendar #daytimeCalendar
-                              (onChange)="dateSelected($event, 'second', true)"
+                              (onChange)="pendingValueChanged($event)"
                               (onGoToCurrent)="onGoToCurrent.emit()"
                               (onLeftNav)="onLeftNavClick($event)"
                               (onRightNav)="onRightNavClick($event)"
@@ -89,14 +103,22 @@
                               [theme]="theme()"
                               opens="left">
         </dp-day-time-calendar>
-        <div class="dp-picker-actions">
-          <button type="button" class="dp-btn-confirm" (click)="confirmModal()">
-            {{ componentConfig().locale === 'fa' ? 'تایید' : 'Confirm' }}
-          </button>
-          <button type="button" class="dp-btn-close" (click)="closeModal()">
-            {{ componentConfig().locale === 'fa' ? 'بستن' : 'Close' }}
-          </button>
-        </div>
+        @if (showActionButtons()) {
+          <div class="dp-picker-actions">
+            @if (isRangeMode()) {
+              <span class="dp-range-summary">
+                {{ inputElementValue() || (componentConfig().locale === 'fa' ? 'بازه را انتخاب کنید' : 'Pick a range') }}
+              </span>
+            }
+            <span class="dp-actions-spacer"></span>
+            <button type="button" class="dp-btn dp-btn-close" (click)="closeModal()">
+              {{ componentConfig().locale === 'fa' ? 'بستن' : 'Cancel' }}
+            </button>
+            <button type="button" class="dp-btn dp-btn-confirm" [disabled]="!canConfirm" (click)="confirmModal()">
+              {{ componentConfig().locale === 'fa' ? 'تایید' : 'Confirm' }}
+            </button>
+          </div>
+        }
       </div>
     </div>
     }

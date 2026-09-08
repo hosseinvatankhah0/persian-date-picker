@@ -24,7 +24,7 @@ import {CalendarValue} from '../common/types/calendar-value';
 import {UtilsService} from '../common/services/utils/utils.service';
 import {IDate} from '../common/models/date.model';
 import {DateValidator} from '../common/types/validator.type';
-import {CommonModule, NgIf} from '@angular/common';
+import {CommonModule} from '@angular/common';
 
 const moment = momentNs;
 
@@ -36,8 +36,7 @@ const moment = momentNs;
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
-    NgIf
+    CommonModule
   ],
   providers: [
     TimeSelectService,
@@ -219,7 +218,15 @@ export class TimeSelectComponent implements OnInit, OnChanges, ControlValueAcces
     this.meridiem = this.timeSelectService.getMeridiem(this.componentConfig, time);
   }
 
+  /**
+   * Kept for hosts driving the component directly; the picker itself commits
+   * through its own action bar so the time panel renders no buttons.
+   */
   confirmSelection() {
     this.onConfirm.emit({date: this.selected, selected: true});
+  }
+
+  get isFarsi(): boolean {
+    return this.componentConfig?.locale === 'fa';
   }
 }

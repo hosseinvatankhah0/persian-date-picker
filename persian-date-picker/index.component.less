@@ -14,24 +14,36 @@
     right: 32px;
     top: 50%;
     transform: translateY(-50%);
+    /* Reset browser button chrome now that this is a real <button>, not a <span>. */
+    border: none;
+    background: transparent;
+    font: inherit;
     cursor: pointer;
     color: #888;
     font-size: 14px;
-    padding: 4px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
 
-    &:hover:not(.disabled) {
+    &:hover:not(:disabled) {
       color: #e53935;
       background-color: rgba(229, 57, 53, 0.1);
     }
 
-    &.disabled {
+    &:focus-visible {
+      outline: 2px solid #1976d2;
+      outline-offset: 1px;
+    }
+
+    &:disabled {
       cursor: not-allowed;
       color: #ccc;
+      opacity: 0.7;
     }
   }
 

@@ -84,6 +84,7 @@ export class MonthCalendarComponent implements OnInit, OnChanges, ControlValueAc
   selected = signal<Moment[]>([]);
   currentDateView = signal<Moment>(moment());
   showYearSelector = signal(false);
+  hoveredMonth = signal<Moment | null>(null);
 
   componentConfig = computed(() => this.monthCalendarService.getConfig({
     ...this.config(),
@@ -91,6 +92,12 @@ export class MonthCalendarComponent implements OnInit, OnChanges, ControlValueAc
     max: this.maxDate() || this.config()?.max
   }));
   yearMonths = computed(() => this.monthCalendarService.generateYear(this.componentConfig(), this.currentDateView(), this.selected()));
+  isRangeMode = computed(() => this.componentConfig().selectionMode === 'range');
+  /** Shown between the two range clicks so the user knows what step they're on. */
+  rangeHint = computed(() => {
+    if (!this.isRangeMode() || this.selected().length !== 1) return null;
+    return this.componentConfig().locale === 'fa' ? 'ماه پایان بازه را انتخاب کنید' : 'Pick the end month';
+  });
 
   navLabel = computed(() => this.monthCalendarService.getHeaderLabel(this.componentConfig(), this.currentDateView()));
   showLeftNav = computed(() => this.monthCalendarService.shouldShowLeft(this.componentConfig().min, this.currentDateView()));
@@ -205,14 +212,34 @@ export class MonthCalendarComponent implements OnInit, OnChanges, ControlValueAc
 
   monthClicked(month: IMonth) {
     if (month.disabled) return;
-    if (month.selected && !this.componentConfig().unSelectOnClick) {
-      return;
+
+    let nextSelected: Moment[];
+    if (this.isRangeMode()) {
+      nextSelected = this.utilsService.updateSelectedRange(this.selected(), month, 'month');
+      this.hoveredMonth.set(null);
+    } else {
+      if (month.selected && !this.componentConfig().unSelectOnClick) {
+        return;
+      }
+      nextSelected = this.utilsService.updateSelected(!!this.componentConfig().allowMultiSelect, this.selected(), month, 'month');
     }
 
-    const nextSelected = this.utilsService.updateSelected(!!this.componentConfig().allowMultiSelect, this.selected(), month, 'month');
     this.selected.set(nextSelected);
     this.onChangeCallback(this.processOnChangeCallback(nextSelected));
     this.onSelect.emit(month);
+  }
+
+  monthHovered(month: IMonth) {
+    if (!this.isRangeMode() || month.disabled) return;
+    if (this.selected().length === 1) {
+      this.hoveredMonth.set(month.date);
+    }
+  }
+
+  clearHover() {
+    if (this.hoveredMonth()) {
+      this.hoveredMonth.set(null);
+    }
   }
 
   onLeftNavClick() {
@@ -282,11 +309,31 @@ export class MonthCalendarComponent implements OnInit, OnChanges, ControlValueAc
       (config.max && date.isAfter(config.max, 'year')));
   }
 
+  /**
+   * The button shows a short month name only; announce the year too so a
+   * screen reader can tell "دی" in one year apart from another.
+   */
+  getMonthAriaLabel(month: IMonth): string {
+    const config = this.componentConfig();
+    const format = config.locale === 'fa' ? 'MMMM jYYYY' : 'MMMM YYYY';
+    return month.date.clone().locale(config.locale || 'fa').format(format);
+  }
+
   getMonthBtnCssClass(month: IMonth): { [klass: string]: boolean } {
     const cssClass: { [klass: string]: boolean } = {
       'dp-selected': !!month.selected,
       'dp-current-month': !!month.currentMonth
     };
+
+    if (this.isRangeMode()) {
+      const range = this.utilsService.getRangeState(month.date, this.selected(), this.hoveredMonth(), 'month');
+      cssClass['dp-range-start'] = range.isStart;
+      cssClass['dp-range-end'] = range.isEnd;
+      cssClass['dp-in-range'] = range.isInRange;
+      cssClass['dp-range-preview'] = range.isPreview && range.isInRange;
+      cssClass['dp-selected'] = range.isStart || range.isEnd;
+    }
+
     const customCssClass: string = this.monthCalendarService.getMonthBtnCssClass(this.componentConfig(), month.date);
 
     if (customCssClass) {
@@ -300,6 +347,14 @@ export class MonthCalendarComponent implements OnInit, OnChanges, ControlValueAc
     const config = this.componentConfig();
     const now = moment().locale(config.locale || 'fa');
     this.currentDateView.set(now.clone());
+
+    if (this.isRangeMode()) {
+      // Navigating home should not silently close a half-open range.
+      this.onGoToCurrent.emit();
+      this.cd.markForCheck();
+      return;
+    }
+
     // Select the current month, not just navigate to it
     this.monthClicked({
       date: now.clone().startOf('month'),

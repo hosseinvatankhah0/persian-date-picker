@@ -47,6 +47,7 @@ import {DateValidator} from '../common/types/validator.type';
 import {MonthCalendarComponent} from '../month-calendar/month-calendar.component';
 import {INavEvent} from '../common/models/navigation-event.model';
 import {CommonModule} from '@angular/common';
+import {TSelectionMode} from '../common/types/selection-mode.type';
 
 const moment = momentNs;
 
@@ -99,6 +100,8 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   maxDate = input<any>();
   minTime = input<SingleCalendarValue>();
   maxTime = input<SingleCalendarValue>();
+  required = input<boolean>(false);
+  selectionMode = input<TSelectionMode>();
 
   @HostBinding('class') get themeClass() {
     return this.theme() || '';
@@ -131,12 +134,30 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   showMinDateIsNotValid = signal(false);
   showMaxDateIsNotValid = signal(false);
 
+  /** Last value handed to the form; restored when the user closes without confirming. */
+  private committedSelection: Moment[] = [];
+  /** Element focused before the dialog opened, so closing can hand focus back. */
+  private lastFocusedElement: HTMLElement | null = null;
+  private static readonly FOCUSABLE_SELECTOR =
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
   // Computeds
   componentConfig = computed(() => this.dayPickerService.getConfig({
     ...this.config(),
     min: this.minDate() || this.config()?.min,
-    max: this.maxDate() || this.config()?.max
+    max: this.maxDate() || this.config()?.max,
+    selectionMode: this.selectionMode() || this.config()?.selectionMode
   }, this.mode()));
+  isRangeMode = computed(() => this.componentConfig().selectionMode === 'range');
+  /** When true, selection stays pending until the user hits confirm. */
+  showActionButtons = computed(() => !!this.componentConfig().showActionButtons);
+  dialogLabel = computed(() => {
+    const isFa = this.componentConfig().locale === 'fa';
+    const labels: Record<CalendarMode, string> = isFa
+      ? {day: 'انتخاب تاریخ', month: 'انتخاب ماه', time: 'انتخاب ساعت', daytime: 'انتخاب تاریخ و ساعت'}
+      : {day: 'Choose date', month: 'Choose month', time: 'Choose time', daytime: 'Choose date and time'};
+    return labels[this.mode()];
+  });
   dayCalendarConfig = computed(() => this.dayPickerService.getDayConfigService(this.componentConfig()));
   dayTimeCalendarConfig = computed(() => this.dayPickerService.getDayTimeConfigService(this.componentConfig()));
   timeSelectConfig = computed(() => this.dayPickerService.getTimeConfigService(this.componentConfig()));
@@ -221,6 +242,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
         config.locale || 'fa'
       );
       this.selected.set(selectedMoments);
+      this.committedSelection = selectedMoments.map(m => m.clone());
 
       if (selectedMoments.length) {
         const nextView = this.utilsService.getDefaultDisplayDate(
@@ -235,6 +257,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
       this.updateInputElementValue(selectedMoments);
     } else {
       this.selected.set([]);
+      this.committedSelection = [];
       this.inputElementValue.set('');
     }
 
@@ -243,13 +266,14 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
   updateInputElementValue(selected: Moment[]) {
     const config = this.componentConfig();
-    const val = (<string[]> this.utilsService.convertFromMomentArray(
+    const parts = <string[]> this.utilsService.convertFromMomentArray(
       config.format || 'YYYY-MM-DD',
       selected,
       ECalendarValue.StringArr,
       config.locale || 'fa'
-    )).join(' | ');
-    this.inputElementValue.set(val);
+    );
+    const separator = this.isRangeMode() ? (config.rangeSeparator || ' - ') : ' | ';
+    this.inputElementValue.set(parts.join(separator));
   }
 
   registerOnChange(fn: any): void {
@@ -271,10 +295,13 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     if (typeof selected === 'string') {
       return selected;
     } else {
+      const returnedValueType = config.returnedValueType
+        || (this.isRangeMode() ? ECalendarValue.StringArr : this.inputValueType);
+
       return this.utilsService.convertFromMomentArray(
         config.format || 'YYYY-MM-DD',
         selected,
-        config.returnedValueType || this.inputValueType,
+        returnedValueType,
         config.locale || 'fa'
       );
     }
@@ -337,10 +364,13 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
   showCalendars() {
     if (this.disabled() || this.isModalOpen()) return;
+    this.committedSelection = this.selected().map(m => m.clone());
+    this.lastFocusedElement = document.activeElement as HTMLElement;
     this.hideStateHelper = true;
     this.isModalOpen.set(true);
     this.onOpen.emit();
     this.cd.markForCheck();
+    this.focusDialogAfterRender();
   }
 
   hideCalendar() {
@@ -353,6 +383,61 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     }
     this.onClose.emit();
     this.cd.markForCheck();
+    // Hand keyboard focus back to whatever opened the dialog rather than
+    // dropping it on <body>, which is what closing a modal usually does wrong.
+    this.lastFocusedElement?.focus();
+    this.lastFocusedElement = null;
+  }
+
+  /**
+   * The dialog's content is behind an @if, so it does not exist in the DOM
+   * yet on the same tick isModalOpen() flips. A macrotask is enough to run
+   * after Angular has rendered it.
+   */
+  private focusDialogAfterRender() {
+    setTimeout(() => {
+      const container = this.calendarContainer()?.nativeElement as HTMLElement | undefined;
+      if (!container) return;
+
+      const preferred = container.querySelector<HTMLElement>(
+        '.dp-selected, [aria-current="date"]'
+      );
+      const focusable = container.querySelectorAll<HTMLElement>(DatePickerModalComponent.FOCUSABLE_SELECTOR);
+      (preferred || focusable[0] || container).focus();
+    }, 0);
+  }
+
+  /**
+   * Minimal modal focus trap (WAI-ARIA APG dialog pattern): Tab/Shift+Tab
+   * cycle within the dialog instead of escaping to the page behind it.
+   */
+  onContainerKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      this.closeModal();
+      event.stopPropagation();
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+
+    const container = this.calendarContainer()?.nativeElement as HTMLElement | undefined;
+    if (!container) return;
+
+    const focusable = Array.from(
+      container.querySelectorAll<HTMLElement>(DatePickerModalComponent.FOCUSABLE_SELECTOR)
+    ).filter(el => el.offsetParent !== null);
+    if (!focusable.length) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   onViewDateChange(value: CalendarValue) {
@@ -419,42 +504,51 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     return this.mode() !== 'day' || maxMoment.isAfter(currentDate);
   }
 
-  dateSelected(date: IDate, granularity: unitOfTime.Base, _ignoreClose?: boolean) {
+  dateSelected(date: IDate, granularity: unitOfTime.Base, forceClose?: boolean) {
     if (this.disabled() || !date.date?.isValid()) return;
-    const nextSelected = this.utilsService.updateSelected(
-      !!this.componentConfig().allowMultiSelect,
-      this.selected(),
-      date,
-      granularity
-    );
+
+    const nextSelected = this.isRangeMode()
+      ? this.utilsService.updateSelectedRange(this.selected(), date, granularity)
+      : this.utilsService.updateSelected(
+          !!this.componentConfig().allowMultiSelect,
+          this.selected(),
+          date,
+          granularity
+        );
+
+    this.applySelection(nextSelected, forceClose);
+  }
+
+  /**
+   * Replaces the whole selection (used by modes whose child component owns the
+   * value, e.g. time and daytime) rather than toggling a single date.
+   */
+  pendingValueChanged(date: IDate) {
+    if (this.disabled() || !date?.date?.isValid()) return;
+    this.applySelection([date.date.clone()]);
+  }
+
+  private applySelection(nextSelected: Moment[], forceClose?: boolean) {
     this.selected.set(nextSelected);
     this.updateInputElementValue(nextSelected);
 
-    const val = this.processOnChangeCallback(nextSelected);
+    // With an action bar the value stays pending until the user confirms, so
+    // hosts do not receive a stream of half-finished values.
+    if (!this.showActionButtons()) {
+      this.commitSelection(nextSelected);
+    }
+
+    if (forceClose || (!this.showActionButtons() && this.componentConfig().closeOnSelect)) {
+      this.closeModal();
+    }
+    this.cd.markForCheck();
+  }
+
+  private commitSelection(selection: Moment[]) {
+    this.committedSelection = selection.map(m => m.clone());
+    const val = this.processOnChangeCallback(selection);
     this.onChangeCallback(val, false);
     this.onChange.emit(val);
-
-    if (_ignoreClose || this.componentConfig().closeOnSelect) this.closeModal();
-  }
-
-  async onDateClick() {
-    if (this.componentConfig().closeOnSelect) {
-      const cond = await this.checkClass();
-      if (cond) {
-        setTimeout(this.hideCalendar.bind(this), this.componentConfig().closeOnSelectDelay || 0);
-      }
-    }
-  }
-
-  checkClass(): Promise<boolean> {
-    return new Promise((resolve) => {
-      const listener = (evt: MouseEvent) => {
-        const target = evt.target as HTMLElement;
-        document.removeEventListener('click', listener);
-        resolve(target.className ? target.className.includes('dp-calendar-day') : false);
-      };
-      document.addEventListener('click', listener);
-    });
   }
 
   onKeyPress(event: KeyboardEvent) {
@@ -477,18 +571,45 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   }
 
   closeModal(): void {
+    // Discard anything the user did not confirm.
+    if (this.showActionButtons()) {
+      const restored = this.committedSelection.map(m => m.clone());
+      this.selected.set(restored);
+      this.updateInputElementValue(restored);
+    }
     this.hideCalendar();
     this.cd.markForCheck();
   }
 
   confirmModal(): void {
-    const selectedMoments = this.selected();
-    if (selectedMoments && selectedMoments.length) {
-      const val = this.processOnChangeCallback(selectedMoments);
-      this.onChangeCallback(val, false);
-      this.onChange.emit(val);
+    let selection = this.selected();
+
+    if (!selection.length) {
+      // Time panels start on "now" without emitting, so confirming straight
+      // away should still commit what the user is looking at.
+      const fallback = this.timeSelectRef()?.selected || this.dayTimeCalendarRef()?.selected;
+      if (fallback) {
+        selection = [fallback.clone()];
+        this.selected.set(selection);
+        this.updateInputElementValue(selection);
+      }
     }
-    this.closeModal();
+
+    this.commitSelection(selection);
+    this.hideCalendar();
+    this.cd.markForCheck();
+  }
+
+  get canConfirm(): boolean {
+    // A range is only usable once both ends are picked.
+    if (this.isRangeMode()) {
+      return this.selected().length === 2;
+    }
+    // Time panels always hold a value, even before the user touches them.
+    if (this.mode() === 'time' || this.mode() === 'daytime') {
+      return true;
+    }
+    return this.selected().length > 0;
   }
 
   transformToJalali(value: any, toFormat = 'jYYYY/jMM/jDD'): string {

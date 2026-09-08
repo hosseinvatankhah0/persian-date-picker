@@ -16,6 +16,7 @@ import {
 import moment, { Moment } from 'jalali-moment';
 import { DatePickerModalComponent } from '../date-picker/date-picker.component';
 import { CommonModule } from '@angular/common';
+import { TSelectionMode } from '../common/types/selection-mode.type';
 
 export const PERSIAN_DATE_PICKER_VALUE_ACCESSOR: any = {
   provide: NG_VALUE_ACCESSOR,
@@ -39,6 +40,8 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
   private readonly cdr = inject(ChangeDetectorRef);
 
   dateObject: Moment | null = null;
+  /** Populated instead of `dateObject` while `selectionMode === 'range'`. */
+  rangeObject: Moment[] = [];
   config: any = {};
   inlineConfig: any = {};
   standaloneNgModelOptions = { standalone: true };
@@ -60,6 +63,11 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
   @Output() inputModelChange = new EventEmitter<string>();
   @Input() pickerType: 'modal' | 'inline' = 'modal';
   @Input() fontSize = 23;
+  /** 'range' turns the day/month calendar into a from-to picker. */
+  @Input() selectionMode: TSelectionMode = 'single';
+  /** Overrides the automatic confirm/close bar decision. */
+  @Input() showActionButtons?: boolean;
+  @Input() rangeSeparator = ' - ';
 
   constructor(private elementRef: ElementRef) {
   }
@@ -92,25 +100,55 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
   onTouched = () => {
   };
 
+  get isRange(): boolean {
+    return this.selectionMode === 'range';
+  }
+
+  get hasValue(): boolean {
+    return this.isRange ? this.rangeObject.length > 0 : !!this.dateObject;
+  }
+
+  get pickerValue(): Moment | Moment[] | null {
+    return this.isRange ? this.rangeObject : this.dateObject;
+  }
+
   emitChanges(): void {
-    if (this.dateObject) {
-      if (typeof this.dateObject === 'string') {
-        this.onChange('');
-      } else {
-        const value = this.dateObject.locale(this.locale).format(this.config.format);
-        this.onChange(value);
-      }
-    } else {
-      this.onChange('');
+    const value = this.formatValue();
+    this.onChange(value);
+    this.inputModelChange.emit(typeof value === 'string' ? value : value.join(this.rangeSeparator));
+  }
+
+  private formatValue(): string | string[] {
+    if (this.isRange) {
+      return this.rangeObject
+        .filter(Boolean)
+        .map(m => m.locale(this.locale).format(this.config.format));
     }
-    this.inputModelChange.emit(this.dateObject ? this.dateObject.locale(this.locale).format(this.config.format) : '');
+
+    if (!this.dateObject || typeof this.dateObject === 'string') {
+      return '';
+    }
+
+    return this.dateObject.locale(this.locale).format(this.config.format);
   }
 
   writeValue(obj: any): void {
     if (!this.config?.format) {
       this.configure();
     }
-    this.dateObject = this.normalizeToMoment(obj);
+
+    if (this.isRange) {
+      const raw: any[] = Array.isArray(obj)
+        ? obj
+        : (typeof obj === 'string' && obj ? obj.split(this.rangeSeparator) : []);
+      this.rangeObject = raw
+        .map(v => this.normalizeToMoment(v))
+        .filter((v): v is Moment => !!v);
+      this.dateObject = this.rangeObject[0] || null;
+    } else {
+      this.dateObject = this.normalizeToMoment(obj);
+    }
+
     this.cdr.markForCheck();
   }
 
@@ -216,8 +254,14 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
       locale: this.locale,
       unSelectOnClick: false,
       showMultipleYearsNavigation: true,
+      selectionMode: this.selectionMode,
+      rangeSeparator: this.rangeSeparator,
       format,
     };
+
+    if (this.showActionButtons !== undefined) {
+      this.config.showActionButtons = this.showActionButtons;
+    }
     this.inlineConfig = {
       ...this.config,
       hideInputContainer: true,
@@ -235,13 +279,24 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
 
     event.stopPropagation();
     this.dateObject = null;
-    this.onChange('');
+    this.rangeObject = [];
+    this.onChange(this.isRange ? [] : '');
     this.inputModelChange.emit('');
     this.onTouched();
     this.cdr.markForCheck();
   }
 
   onModelChange(e: any): void {
+    if (this.isRange) {
+      const values: any[] = Array.isArray(e) ? e : (e ? [e] : []);
+      this.rangeObject = values
+        .map(v => (moment.isMoment(v) ? v : this.normalizeToMoment(v)))
+        .filter((v): v is Moment => !!v && v.isValid());
+      this.dateObject = this.rangeObject[0] || null;
+      this.emitChanges();
+      return;
+    }
+
     if (typeof e === 'string') {
       if (!this.isKeRemoving) {
         const split = e.replace(/\D/g, '').replace(/\//g, '-');

@@ -1,7 +1,7 @@
 {
-  "name": "persian-date-picker",
-  "version": "1.0.5",
-  "description": "A modern, standalone Jalali (Persian) date picker modal for Angular 22 — with day/month/time/daytime modes, RTL support, and ControlValueAccessor integration.",
+  "name": "persian-date-picker-angular",
+  "version": "1.1.0",
+  "description": "A modern, standalone Jalali (Persian) date and range picker modal for Angular 22 — with day/month/time/daytime modes, range selection, RTL support, and ControlValueAccessor integration.",
   "keywords": [
     "angular",
     "angular22",
@@ -9,6 +9,8 @@
     "persian",
     "shamsi",
     "date-picker",
+    "range-picker",
+    "date-range",
     "datepicker",
     "modal",
     "date-picker-modal",
@@ -31,8 +33,12 @@
     "start": "ng serve",
     "build": "ng build",
     "build:lib": "ng build persian-date-picker",
-    "test": "ng test",
-    "lint": "ng lint"
+    "publish:lib": "npm run build:lib && cd dist/persian-date-picker && npm publish",
+    "test": "node scripts/test-navigation.cjs",
+    "test:navigation": "node scripts/test-navigation.cjs",
+    "build:playground": "ng build playground",
+    "lint": "ng lint",
+    "prepublishOnly": "node -e \"console.error('Refusing to publish from the repo root. Run: npm run build:lib && cd dist/persian-date-picker && npm publish'); process.exit(1)\""
   },
   "dependencies": {
     "tslib": "^2.6.0"

@@ -7,6 +7,7 @@
     (onRightSecondaryNav)="onRightSecondaryNavClick()"
     [isLabelClickable]="componentConfig().isNavHeaderBtnClickable || false"
     [label]="showYearSelector() ? yearRange()[0] + ' – ' + yearRange()[20] : navLabel()"
+    [locale]="componentConfig().locale || 'fa'"
     [showGoToCurrent]="shouldShowCurrent()"
     [showLeftNav]="showYearSelector() ? !isYearDisabled(yearRange()[0] - 1) : showLeftNav()"
     [showRightNav]="showYearSelector() ? !isYearDisabled(yearRange()[20] + 1) : showRightNav()"
@@ -15,12 +16,17 @@
     [theme]="theme() || ''">
 </dp-calendar-nav>
 
+@if (rangeHint(); as hint) {
+  <p class="dp-range-hint" aria-live="polite">{{ hint }}</p>
+}
+
 @if (showYearSelector()) {
   <div class="dp-year-selector-overlay">
     <div class="dp-year-selector-list">
       @for (year of yearRange(); track year) {
         <button (click)="selectYear(year)"
                 [disabled]="isYearDisabled(year)"
+                [attr.aria-current]="isCurrentYear(year) ? 'date' : null"
                 [attr.aria-pressed]="isCurrentYear(year)"
                 [class.dp-year-selected]="isCurrentYear(year)"
                 class="dp-year-btn"
@@ -33,18 +39,26 @@
 }
 
 @if (!showYearSelector()) {
-<div class="dp-month-calendar-container" [ngClass]="{'rtl': isFarsi()}">
-  @for (row of yearMonths(); track row) {
+<div class="dp-month-calendar-container"
+     (mouseleave)="clearHover()"
+     [ngClass]="{'rtl': isFarsi(), 'dp-range-mode': isRangeMode()}">
+  @for (row of yearMonths(); track $index) {
     <div class="dp-months-row">
       @for (month of row; track month.date.valueOf()) {
-        <button (click)="monthClicked(month)"
-                [disabled]="month.disabled"
-                [attr.aria-pressed]="month.selected"
-                [innerText]="month.text"
-                [ngClass]="getMonthBtnCssClass(month)"
-                class="dp-calendar-month"
-                type="button">
-        </button>
+        <span class="dp-month-cell" [ngClass]="getMonthBtnCssClass(month)">
+          <button (click)="monthClicked(month)"
+                  (mouseenter)="monthHovered(month)"
+                  (focus)="monthHovered(month)"
+                  [disabled]="month.disabled"
+                  [attr.aria-current]="month.currentMonth ? 'date' : null"
+                  [attr.aria-label]="getMonthAriaLabel(month)"
+                  [attr.aria-pressed]="month.selected"
+                  [innerText]="month.text"
+                  [ngClass]="getMonthBtnCssClass(month)"
+                  class="dp-calendar-month"
+                  type="button">
+          </button>
+        </span>
       }
     </div>
   }

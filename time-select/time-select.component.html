@@ -1,67 +1,88 @@
-<ul class="dp-time-select-controls">
-  <li class="dp-time-select-control dp-time-select-control-hours">
+<div class="dp-time-select-controls" role="group"
+     [attr.aria-label]="isFarsi ? 'انتخاب زمان' : 'Select time'">
+  <div class="dp-time-select-control dp-time-select-control-hours">
     <button (click)="increase('hour')"
+            [attr.aria-label]="isFarsi ? 'افزایش ساعت' : 'Increase hours'"
             [disabled]="!showIncHour"
             class="dp-time-select-control-up"
             type="button">
     </button>
     <span [innerText]="hours"
-          class="dp-time-select-display-hours">
+          aria-live="polite"
+          class="dp-time-select-display dp-time-select-display-hours">
     </span>
     <button (click)="decrease('hour')"
+            [attr.aria-label]="isFarsi ? 'کاهش ساعت' : 'Decrease hours'"
             [disabled]="!showDecHour"
             class="dp-time-select-control-down"
             type="button"></button>
-  </li>
-  <li [innerText]="componentConfig.timeSeparator"
-      class="dp-time-select-control dp-time-select-separator">
-  </li>
-  <li class="dp-time-select-control dp-time-select-control-minutes">
+    <span class="dp-time-select-label">{{ isFarsi ? 'ساعت' : 'hr' }}</span>
+  </div>
+
+  <span [innerText]="componentConfig.timeSeparator"
+        aria-hidden="true"
+        class="dp-time-select-separator">
+  </span>
+
+  <div class="dp-time-select-control dp-time-select-control-minutes">
     <button (click)="increase('minute')"
+            [attr.aria-label]="isFarsi ? 'افزایش دقیقه' : 'Increase minutes'"
             [disabled]="!showIncMinute"
             class="dp-time-select-control-up"
             type="button"></button>
     <span [innerText]="minutes"
-          class="dp-time-select-display-minutes">
+          aria-live="polite"
+          class="dp-time-select-display dp-time-select-display-minutes">
     </span>
     <button (click)="decrease('minute')"
-            [disabled]="!showDecMinute" class="dp-time-select-control-down"
+            [attr.aria-label]="isFarsi ? 'کاهش دقیقه' : 'Decrease minutes'"
+            [disabled]="!showDecMinute"
+            class="dp-time-select-control-down"
             type="button"></button>
-  </li>
-  <ng-container *ngIf="componentConfig.showSeconds">
-    <li [innerText]="componentConfig.timeSeparator"
-        class="dp-time-select-control dp-time-select-separator">
-    </li>
-    <li class="dp-time-select-control dp-time-select-control-seconds">
+    <span class="dp-time-select-label">{{ isFarsi ? 'دقیقه' : 'min' }}</span>
+  </div>
+
+  @if (componentConfig.showSeconds) {
+    <span [innerText]="componentConfig.timeSeparator"
+          aria-hidden="true"
+          class="dp-time-select-separator">
+    </span>
+    <div class="dp-time-select-control dp-time-select-control-seconds">
       <button (click)="increase('second')"
+              [attr.aria-label]="isFarsi ? 'افزایش ثانیه' : 'Increase seconds'"
               [disabled]="!showIncSecond"
               class="dp-time-select-control-up"
               type="button"></button>
       <span [innerText]="seconds"
-            class="dp-time-select-display-seconds">
+            aria-live="polite"
+            class="dp-time-select-display dp-time-select-display-seconds">
       </span>
       <button (click)="decrease('second')"
+              [attr.aria-label]="isFarsi ? 'کاهش ثانیه' : 'Decrease seconds'"
               [disabled]="!showDecSecond"
               class="dp-time-select-control-down"
               type="button"></button>
-    </li>
-  </ng-container>
-  <li *ngIf="!componentConfig.showTwentyFourHours" class="dp-time-select-control dp-time-select-control-meridiem">
-    <button (click)="toggleMeridiem()"
-            [disabled]="!showToggleMeridiem"
-            class="dp-time-select-control-up"
-            type="button"></button>
-    <span [innerText]="meridiem"
-          class="dp-time-select-display-meridiem">
-    </span>
-    <button (click)="toggleMeridiem()"
-            [disabled]="!showToggleMeridiem"
-            class="dp-time-select-control-down"
-            type="button"></button>
-  </li>
-</ul>
-<div class="dp-time-actions">
-  <button type="button" class="dp-time-btn" (click)="confirmSelection()">
-    {{ componentConfig.locale === 'fa' ? 'تأیید' : 'Set' }}
-  </button>
+      <span class="dp-time-select-label">{{ isFarsi ? 'ثانیه' : 'sec' }}</span>
+    </div>
+  }
+
+  @if (!componentConfig.showTwentyFourHours) {
+    <div class="dp-time-select-control dp-time-select-control-meridiem">
+      <button (click)="toggleMeridiem()"
+              [attr.aria-label]="isFarsi ? 'تغییر قبل/بعد از ظهر' : 'Toggle meridiem'"
+              [disabled]="!showToggleMeridiem"
+              class="dp-time-select-control-up"
+              type="button"></button>
+      <span [innerText]="meridiem"
+            aria-live="polite"
+            class="dp-time-select-display dp-time-select-display-meridiem">
+      </span>
+      <button (click)="toggleMeridiem()"
+              [attr.aria-label]="isFarsi ? 'تغییر قبل/بعد از ظهر' : 'Toggle meridiem'"
+              [disabled]="!showToggleMeridiem"
+              class="dp-time-select-control-down"
+              type="button"></button>
+      <span class="dp-time-select-label">&nbsp;</span>
+    </div>
+  }
 </div>

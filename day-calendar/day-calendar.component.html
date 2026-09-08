@@ -7,22 +7,28 @@
       (onRightNav)="onRightNavClick()"
       [isLabelClickable]="componentConfig().enableMonthSelector || false"
       [label]="navLabel()"
+      [locale]="componentConfig().locale || 'fa'"
       [showGoToCurrent]="shouldShowCurrent()"
       [showLeftNav]="showLeftNav()"
       [showRightNav]="showRightNav()"
       [theme]="theme() || ''">
     </dp-calendar-nav>
 
-    <div [ngClass]="{'dp-hide-near-month': !componentConfig().showNearMonthDays, 'rtl': isFarsi()}"
+    @if (rangeHint(); as hint) {
+      <p class="dp-range-hint" aria-live="polite">{{ hint }}</p>
+    }
+
+    <div [ngClass]="{'dp-hide-near-month': !componentConfig().showNearMonthDays, 'rtl': isFarsi(), 'dp-range-mode': isRangeMode()}"
+         (mouseleave)="clearHover()"
          class="dp-calendar-wrapper">
       <div class="dp-weekdays">
-        @for (weekday of weekdays(); track weekday) {
+        @for (weekday of weekdays(); track weekday.day()) {
           <span [innerText]="getWeekdayName(weekday)"
                 class="dp-calendar-weekday">
           </span>
         }
       </div>
-      @for (week of weeks(); track week) {
+      @for (week of weeks(); track $index) {
         <div class="dp-calendar-week">
           @if (componentConfig().showWeekNumbers) {
             <span [innerText]="week[0].date.isoWeek()"
@@ -30,14 +36,21 @@
             </span>
           }
           @for (day of week; track day.date.valueOf()) {
-            <button (click)="dayClicked(day)"
-                    [attr.data-date]="day.date.format(componentConfig().format)"
-                    [disabled]="day.disabled"
-                    [innerText]="getDayBtnText(day)"
-                    [ngClass]="getDayBtnCssClass(day)"
-                    class="dp-calendar-day"
-                    type="button">
-            </button>
+            <span class="dp-day-cell" [ngClass]="getDayBtnCssClass(day)">
+              <button (click)="dayClicked(day)"
+                      (mouseenter)="dayHovered(day)"
+                      (focus)="dayHovered(day)"
+                      [attr.data-date]="day.date.format(componentConfig().format)"
+                      [attr.aria-current]="day.currentDay ? 'date' : null"
+                      [attr.aria-label]="getDayAriaLabel(day)"
+                      [attr.aria-pressed]="!!day.selected"
+                      [disabled]="day.disabled"
+                      [innerText]="getDayBtnText(day)"
+                      [ngClass]="getDayBtnCssClass(day)"
+                      class="dp-calendar-day"
+                      type="button">
+              </button>
+            </span>
           }
         </div>
       }

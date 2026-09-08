@@ -8,7 +8,7 @@
 
     .dp-month-calendar-container {
       background: @c-white;
-      padding: 16px;
+      padding: 12px 16px 16px;
       min-height: 252px;
       box-sizing: border-box;
 
@@ -17,28 +17,56 @@
       }
     }
 
+    .dp-range-hint {
+      margin: 0;
+      padding: 0 16px 4px;
+      font-size: 11px;
+      color: @c-primary-solid;
+      text-align: center;
+    }
+
     .dp-months-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px 16px;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
 
-    .dp-calendar-month {
+    /* The cell owns the range band; the button owns the rounded month chip. */
+    .dp-month-cell {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+    }
+
+    .dp-calendar-month,
+    &.dp-material .dp-calendar-month {
+      position: relative;
+      z-index: 1;
       box-sizing: border-box;
-      width: 64px;
-      height: 48px;
+      /* A wide element with a huge radius reads as an ellipse, so keep the
+         corner radius proportional to the height instead. */
+      width: 100%;
+      max-width: 78px;
+      height: 40px;
+      padding: 0 6px;
       margin: 0 auto;
       cursor: pointer;
       font-size: 13px;
-      border-radius: 24px;
+      line-height: 1;
+      border-radius: @radius-md;
       border: none;
       outline: none;
       background: transparent;
+      color: @c-text;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       transition: background 0.15s ease, color 0.15s ease;
 
       &:hover {
-        background: #e8f0fe;
+        background: @c-accent-hover;
       }
 
       &.dp-selected {
@@ -51,9 +79,12 @@
         }
       }
 
-      &.dp-current-month {
-        border: 2px solid @c-primary-solid;
-        padding: 0;
+      &.dp-current-month:not(.dp-selected) {
+        /* A 2px solid ring reads as a heavy second button; a hairline tint
+           plus a weight bump marks "today's month" without shouting. */
+        box-shadow: inset 0 0 0 1px fade(@c-primary-solid, 42%);
+        color: @c-primary-solid;
+        font-weight: 500;
       }
 
       &:disabled {
@@ -66,12 +97,63 @@
       }
     }
 
+    /* ---------- Range selection ---------- */
+    .dp-month-calendar-container.dp-range-mode {
+      .dp-month-cell.dp-in-range::before {
+        content: '';
+        position: absolute;
+        inset: 2px 0;
+        background: @c-range-band;
+        z-index: 0;
+      }
+
+      .dp-month-cell.dp-range-preview::before {
+        background: @c-range-band-preview;
+      }
+
+      .dp-month-cell.dp-range-start::before {
+        border-radius: @range-cap-month 0 0 @range-cap-month;
+        left: 2px;
+      }
+
+      .dp-month-cell.dp-range-end::before {
+        border-radius: 0 @range-cap-month @range-cap-month 0;
+        right: 2px;
+      }
+
+      .dp-month-cell.dp-range-start.dp-range-end::before {
+        display: none;
+      }
+
+      .dp-calendar-month.dp-in-range:not(.dp-selected) {
+        background: transparent;
+      }
+    }
+
+    .dp-month-calendar-container.rtl.dp-range-mode {
+      .dp-month-cell.dp-range-start::before {
+        border-radius: 0 @range-cap-month @range-cap-month 0;
+        left: 0;
+        right: 2px;
+      }
+
+      .dp-month-cell.dp-range-end::before {
+        border-radius: @range-cap-month 0 0 @range-cap-month;
+        right: 0;
+        left: 2px;
+      }
+
+      .dp-month-cell.dp-range-start.dp-range-end::before {
+        display: none;
+      }
+    }
+
     .dp-year-selector-overlay {
       position: relative;
       background: @c-white;
       z-index: 10;
       overflow: hidden;
-      border-radius: 0 0 12px 12px;
+      border-radius: 0 0 @radius-lg @radius-lg;
     }
 
     .dp-year-selector-list {
@@ -94,11 +176,11 @@
       cursor: pointer;
       font-size: 13px;
       text-align: center;
-      border-radius: 18px;
+      border-radius: @radius-sm;
       transition: background 0.15s ease;
 
       &:hover {
-        background: #e8f0fe;
+        background: @c-accent-hover;
       }
 
       &.dp-year-selected {
@@ -120,6 +202,14 @@
     button:focus-visible {
       outline: 2px solid @c-primary-solid;
       outline-offset: -2px;
+    }
+
+    /* Bump the tap target on touch devices without changing the visual chip
+       size — WCAG 2.5.5 / Material guidance both want ~44px on touch. */
+    @media (pointer: coarse) {
+      .dp-month-cell {
+        height: 48px;
+      }
     }
   }
 }

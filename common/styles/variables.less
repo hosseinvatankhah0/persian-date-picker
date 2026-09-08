@@ -5,6 +5,48 @@
 @c-primary-solid: #106CC8;
 @c-light-gray: #E0E0E0;
 
+// Neutral ramp shared by every panel so the calendar, time panel and action
+// bar read as one surface.
+@c-text: #202124;
+@c-text-muted: #5f6368;
+@c-surface-muted: #f8f9fa;
+@c-hover: #f1f3f4;
+@c-divider: #ececf0;
+
+// Tint used for the connected range band, light enough to keep day numbers readable.
+@c-range-band: fade(@c-primary-solid, 12%);
+@c-range-band-preview: fade(@c-primary-solid, 7%);
+@c-accent-hover: fade(@c-primary-solid, 10%);
+
+@cell-size: 36px;
+@radius-sm: 8px;
+@radius-md: 12px;
+@radius-lg: 12px;
+
+// Cap on the outer ends of a range band. Kept in px, not %, because a
+// percentage radius takes its horizontal half from the cell width and its
+// vertical half from the band height, so it turns into an ellipse whenever the
+// grid column is wider than it is tall. These are derived from band height:
+// day bands are 32px tall, month bands 40px.
+@range-cap-day: 14px;
+@range-cap-month: 12px;
+
+@transition-fast: 0.15s ease;
+
+// Visually hides content while keeping it in the accessibility tree — used
+// for <label>s and hints that only screen readers need to announce.
+.sr-only() {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @basic-height: 30px;
 @basic-width: 252px;
 

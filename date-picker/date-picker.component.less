@@ -1,36 +1,62 @@
 @import '../common/styles/variables';
 
-dp-date-picker-modal .dp-picker-actions,
-dp-time-select .dp-time-actions {
+/* One row, always: summary on the leading edge, actions on the trailing edge. */
+dp-date-picker-modal .dp-picker-actions {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
   padding: 10px 16px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid @c-divider;
 
-  button {
+  .dp-actions-spacer {
+    flex: 1 1 auto;
+  }
+
+  .dp-range-summary {
+    font-size: 12px;
+    color: @c-text-muted;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 55%;
+  }
+
+  .dp-btn {
+    flex: 0 0 auto;
     border: none;
     background: transparent;
     font: inherit;
+    font-weight: 500;
     cursor: pointer;
-    min-height: 36px;
-    padding: 0 18px;
-    border-radius: 8px;
-    transition: background 0.15s ease;
+    min-height: 34px;
+    padding: 0 16px;
+    border-radius: @radius-sm;
+    transition: background 0.15s ease, opacity 0.15s ease;
 
-    &:focus-visible { outline: 2px solid @c-primary-solid; }
+    &:focus-visible {
+      outline: 2px solid @c-primary-solid;
+      outline-offset: 1px;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
   }
 
   .dp-btn-close {
-    color: #5f6368;
+    color: @c-text-muted;
 
-    &:hover { background: #f1f3f4; }
+    &:hover:not(:disabled) { background: @c-hover; }
   }
 
   .dp-btn-confirm {
     background: @c-primary-solid;
-    color: #fff;
+    color: @c-white;
 
-    &:hover { background: darken(@c-primary-solid, 8%); }
+    &:hover:not(:disabled) { background: darken(@c-primary-solid, 8%); }
   }
 }
 
@@ -53,7 +79,9 @@ dp-time-select .dp-time-actions {
       flex-direction: column;
     }
 
-    .dp-selected {
+    /* Scoped to the actual day/month chips: the range wrappers also carry
+       .dp-selected and must stay transparent. */
+    button.dp-selected {
       background: @c-primary;
       color: @c-white;
     }
@@ -79,17 +107,32 @@ dp-time-select .dp-time-actions {
   margin-top: 3px;
 }
 
+.dp-sr-only {
+  .sr-only();
+}
+
 .datepicker-button {
   position: absolute;
   top: 50%;
   right: 5px;
   transform: translateY(-50%);
+  /* Reset browser button chrome now that this is a real <button>, not a <span>. */
+  border: none;
+  background: transparent;
+  padding: 0 6px;
+  font: inherit;
   color: #42526e;
   cursor: pointer;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: @radius-sm;
+
+  &:focus-visible {
+    outline: 2px solid @c-primary-solid;
+    outline-offset: 1px;
+  }
 
   &.disabled {
     cursor: not-allowed;
@@ -141,7 +184,27 @@ dp-date-picker-modal:not(.inline-picker) {
     transform: none;
     border-radius: 16px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-    padding: 10px;
+    /* No padding: the action bar's divider must span the full card width. */
+    padding: 0;
     animation: dpModalPop 0.16s ease-out;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+    /* Safety net for very narrow viewports: keeps the card's own corners
+       rounded (overflow still clips them) while letting wide content, like
+       the time panel, scroll instead of getting cut off. */
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  @media (max-width: 420px) {
+    .kendo-datepicker-dialog:not([hidden]) {
+      padding: 12px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kendo-datepicker-dialog:not([hidden]) .dp-popup {
+      animation: none;
+    }
   }
 }

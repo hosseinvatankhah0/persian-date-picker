@@ -7,6 +7,7 @@ import {IDate} from '../../models/date.model';
 import {CalendarMode} from '../../types/calendar-mode';
 import {DateValidator} from '../../types/validator.type';
 import {ICalendarInternal} from '../../models/calendar.model';
+import {IRangeState} from '../../models/range.model';
 
 const moment = momentNs;
 
@@ -173,6 +174,52 @@ export class UtilsService {
     } else {
       return isSelected ? [date.date] : [];
     }
+  }
+
+  /**
+   * Range selection follows the danielykpan/date-time-picker flow:
+   * first click opens a range, second click closes it (swapping the ends when
+   * the user picks backwards), a third click starts a fresh range.
+   */
+  updateSelectedRange(currentlySelected: Moment[],
+                      date: IDate,
+                      granularity: unitOfTime.Base = 'day'): Moment[] {
+    const [from, to] = currentlySelected || [];
+
+    if (!from || to) {
+      return [date.date.clone()];
+    }
+
+    return date.date.isBefore(from, granularity)
+      ? [date.date.clone(), from.clone()]
+      : [from.clone(), date.date.clone()];
+  }
+
+  /**
+   * Where `date` sits inside the selected range, including the live preview
+   * drawn between the open range start and the cell under the pointer.
+   */
+  getRangeState(date: Moment,
+                selected: Moment[],
+                hovered?: Moment | null,
+                granularity: unitOfTime.Base = 'day'): IRangeState {
+    const [from, to] = selected || [];
+
+    if (!from) {
+      return {isStart: false, isEnd: false, isInRange: false, isPreview: false};
+    }
+
+    const previewEnd = !to && hovered && hovered.isAfter(from, granularity) ? hovered : null;
+    const previewStart = !to && hovered && hovered.isBefore(from, granularity) ? hovered : null;
+    const start = previewStart || from;
+    const end = to || previewEnd || (previewStart ? from : null);
+
+    return {
+      isStart: date.isSame(start, granularity),
+      isEnd: !!end && date.isSame(end, granularity),
+      isInRange: !!end && date.isBetween(start, end, granularity, '[]'),
+      isPreview: !to && !!(previewStart || previewEnd)
+    };
   }
 
   closestParent(element: HTMLElement | null, selector: string): HTMLElement | null {

@@ -6,16 +6,22 @@ const jasmineCore = require('jasmine-core');
 
 async function run() {
   const root = path.resolve(__dirname, '..');
-  const output = path.join(root, '.angular', 'navigation-regression.mjs');
-  fs.mkdirSync(path.dirname(output), {recursive: true});
+  const outDir = path.join(root, '.angular', 'regression');
+  fs.mkdirSync(outDir, {recursive: true});
+  const specs = [
+    'month-calendar/navigation.regression.spec.ts',
+    'common/range.regression.spec.ts'
+  ];
   await esbuild.build({
     absWorkingDir: root,
-    entryPoints: ['month-calendar/navigation.regression.spec.ts'],
+    entryPoints: specs,
     bundle: true,
     platform: 'node',
     format: 'esm',
     packages: 'external',
-    outfile: output,
+    outdir: outDir,
+    outbase: '.',
+    outExtension: {'.js': '.mjs'},
     tsconfig: 'tsconfig.lib.json'
   });
   await import('@angular/compiler');
@@ -31,7 +37,10 @@ async function run() {
       process.exitCode = result.overallStatus === 'passed' ? 0 : 1;
     }
   });
-  await import(pathToFileURL(output).href);
+  for (const spec of specs) {
+    const bundled = path.join(outDir, spec.replace(/\.ts$/, '.mjs'));
+    await import(pathToFileURL(bundled).href);
+  }
   await environment.execute();
 }
 

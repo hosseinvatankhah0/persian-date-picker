@@ -2,56 +2,79 @@
 
 & {
   dp-time-select {
-    display: inline-block;
+    display: block;
     padding: 16px;
 
     .dp-time-select-controls {
       margin: 0;
-      padding: 0;
+      padding: 12px 14px;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      gap: 4px;
+      gap: 6px;
       line-height: normal;
-      background: @c-white;
+      background: @c-surface-muted;
+      border: 1px solid @c-divider;
+      border-radius: @radius-lg;
+      /* Digits and the h:m:s order stay LTR even inside an RTL calendar. */
+      direction: ltr;
     }
 
     .dp-time-select-control {
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 2px;
       margin: 0;
-      vertical-align: middle;
       font-size: inherit;
-      letter-spacing: 1px;
     }
 
-    .dp-time-select-display-hours,
-    .dp-time-select-display-minutes,
-    .dp-time-select-display-seconds,
-    .dp-time-select-display-meridiem {
+    .dp-time-select-display {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 56px;
-      height: 56px;
-      font-size: 26px;
-      font-weight: 500;
-      color: #202124;
-      background: #f8f9fa;
-      border-radius: 12px;
+      min-width: 56px;
+      height: 44px;
+      padding: 0 8px;
+      font-size: 24px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 1px;
+      color: @c-text;
+      background: @c-white;
+      border: 1px solid @c-divider;
+      border-radius: @radius-md;
       box-sizing: border-box;
     }
 
-    .dp-time-select-separator {
-      width: auto;
-      font-size: 26px;
+    .dp-time-select-display-meridiem {
+      font-size: 16px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .dp-time-select-label {
+      font-size: 10px;
       font-weight: 500;
-      color: #5f6368;
-      height: 56px;
+      letter-spacing: 0.4px;
+      color: @c-text-muted;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    .dp-time-select-separator {
+      /* Line up with the value box, not with the stepper buttons above it. */
+      align-self: flex-start;
+      margin-top: 30px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 10px;
+      font-size: 22px;
+      font-weight: 600;
+      color: @c-text-muted;
+      user-select: none;
     }
 
     .dp-time-select-control-up, .dp-time-select-control-down {
@@ -59,21 +82,34 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 32px;
+      width: 100%;
+      min-width: 56px;
+      height: 26px;
       margin: 0;
+      padding: 0;
       cursor: pointer;
       border: none;
+      color: @c-text-muted;
       background: transparent;
-      border-radius: 8px;
-      transition: background 0.15s ease;
+      border-radius: @radius-sm;
+      transition: background 0.15s ease, color 0.15s ease;
 
       &:hover:not(:disabled) {
-        background: #e8f0fe;
+        background: @c-accent-hover;
+        color: @c-primary-solid;
+      }
+
+      &:active:not(:disabled) {
+        background: fade(@c-primary-solid, 18%);
+      }
+
+      &:focus-visible {
+        outline: 2px solid @c-primary-solid;
+        outline-offset: -2px;
       }
 
       &:disabled {
-        opacity: 0.3;
+        opacity: 0.25;
         cursor: default;
       }
     }
@@ -81,14 +117,23 @@
     .dp-time-select-control-up::before,
     .dp-time-select-control-down::before {
       left: 0;
+      border-color: currentColor;
     }
 
     .dp-time-select-control-up {
       .arrow(-45deg);
+
+      &::before {
+        top: 2px;
+      }
     }
 
     .dp-time-select-control-down {
       .arrow(135deg);
+
+      &::before {
+        bottom: 2px;
+      }
     }
 
     &.dp-material {
@@ -103,31 +148,23 @@
         }
 
         &:hover:not(:disabled) {
-          background: #e8f0fe;
+          background: @c-accent-hover;
         }
       }
     }
   }
 
-  .dp-time-actions {
-    display: flex;
-    justify-content: flex-end;
-    padding: 10px 16px;
-    border-top: 1px solid #f0f0f0;
+  /* The picker owns the single confirm/close row, so the time panel adds none. */
+  dp-day-time-calendar dp-time-select {
+    padding-top: 0;
+  }
 
-    .dp-time-btn {
-      border: none;
-      background: @c-primary-solid;
-      color: #fff;
-      font: inherit;
-      cursor: pointer;
-      min-height: 36px;
-      padding: 0 18px;
-      border-radius: 8px;
-      transition: background 0.15s ease;
-
-      &:hover { background: darken(@c-primary-solid, 8%); }
-      &:focus-visible { outline: 2px solid @c-primary-solid; }
+  /* Bump the tap target on touch devices without changing the visual size —
+     WCAG 2.5.5 / Material guidance both want ~44px on touch. */
+  @media (pointer: coarse) {
+    dp-time-select .dp-time-select-control-up,
+    dp-time-select .dp-time-select-control-down {
+      height: 36px;
     }
   }
 }

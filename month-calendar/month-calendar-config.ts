@@ -3,6 +3,7 @@
 import {Moment} from 'jalali-moment';
 import {ICalendar, ICalendarInternal} from '../common/models/calendar.model';
 import {ECalendarValue} from '../common/types/calendar-value-enum';
+import {TSelectionMode} from '../common/types/selection-mode.type';
 
 export interface IConfig {
   isMonthDisabledCallback?: (date: Moment) => boolean;
@@ -20,6 +21,7 @@ export interface IConfig {
   returnedValueType?: ECalendarValue;
   showGoToCurrent?: boolean;
   unSelectOnClick?: boolean;
+  selectionMode?: TSelectionMode;
 }
 
 export interface IMonthCalendarConfig extends IConfig,

@@ -1,4 +1,4 @@
-﻿import {IDate} from '../common/models/date.model';
+import {IDate} from '../common/models/date.model';
 
 export interface IDay extends IDate {
   currentMonth?: boolean;

@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, HostBinding, input, output, ViewEncapsulation} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, HostBinding, input, output, ViewEncapsulation} from '@angular/core';
 import {CommonModule} from '@angular/common';
 
 @Component({
@@ -25,6 +25,26 @@ export class CalendarNavComponent {
   rightSecondaryNavDisabled = input<boolean>(false);
   showGoToCurrent = input<boolean>(true);
   theme = input<string>('');
+  locale = input<string>('fa');
+
+  private readonly labelsByLocale: Record<string, Record<string, string>> = {
+    fa: {
+      prev: 'قبلی',
+      next: 'بعدی',
+      prevYears: 'سال‌های قبل',
+      nextYears: 'سال‌های بعد',
+      today: 'برو به امروز'
+    },
+    en: {
+      prev: 'Previous',
+      next: 'Next',
+      prevYears: 'Previous years',
+      nextYears: 'Next years',
+      today: 'Go to today'
+    }
+  };
+
+  labels = computed(() => this.labelsByLocale[this.locale()] || this.labelsByLocale['en']);
 
   @HostBinding('class') get themeClass() {
     return this.theme() || '';

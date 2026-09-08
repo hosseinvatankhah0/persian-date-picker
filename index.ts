@@ -10,6 +10,12 @@ export type {IDayEvent} from './day-calendar/day.model';
 export type {IDatePickerModalConfig} from './date-picker/date-picker-config.model';
 export type {IDatePickerModalDirectiveConfig} from './date-picker/date-picker-directive-config.model';
 export type {IMonthCalendarConfig} from './month-calendar/month-calendar-config';
+export type {ITimeSelectConfig} from './time-select/time-select-config.model';
+export type {IDayTimeCalendarConfig} from './day-time-calendar/day-time-calendar-config.model';
+export type {TSelectionMode} from './common/types/selection-mode.type';
+export type {IRange, IRangeState} from './common/models/range.model';
+export type {INavEvent} from './common/models/navigation-event.model';
+export type {TDrops, TOpens} from './common/types/positions.type';
 
 // Export components and directives
 export {DatePickerModalComponent} from './date-picker/date-picker.component';

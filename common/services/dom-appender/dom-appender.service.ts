@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {TDrops, TOpens} from '../../types/poistions.type';
+import {TDrops, TOpens} from '../../types/positions.type';
 
 @Injectable()
 export class DomHelper {

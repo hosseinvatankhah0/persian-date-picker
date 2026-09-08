@@ -4,6 +4,7 @@ import {ICalendar, ICalendarInternal} from '../common/models/calendar.model';
 import {WeekDays} from '../common/types/week-days.type';
 import {Moment} from 'jalali-moment';
 import {ECalendarValue} from '../common/types/calendar-value-enum';
+import {TSelectionMode} from '../common/types/selection-mode.type';
 
 export interface IConfig {
   isDayDisabledCallback?: (date: Moment) => boolean;
@@ -31,6 +32,7 @@ export interface IConfig {
   returnedValueType?: ECalendarValue;
   showGoToCurrent?: boolean;
   unSelectOnClick?: boolean;
+  selectionMode?: TSelectionMode;
 }
 
 export interface IDayCalendarConfig extends IConfig,

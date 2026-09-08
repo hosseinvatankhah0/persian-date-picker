@@ -28,7 +28,9 @@ export class DatePickerModalService {
     enableMonthSelector: true,
     showGoToCurrent: true,
     locale: 'fa',
-    hideOnOutsideClick: true
+    hideOnOutsideClick: true,
+    selectionMode: 'single',
+    rangeSeparator: ' - '
   };
   private gregorianExtensionConfig: IDatePickerModalConfig = {
     format: 'DD-MM-YYYY',
@@ -53,6 +55,22 @@ export class DatePickerModalService {
 
     if (config && config.allowMultiSelect && config.closeOnSelect === undefined) {
       _config.closeOnSelect = false;
+    }
+
+    // Modes that build their value over several interactions need an explicit
+    // commit step, so they show the action bar and never auto-close.
+    if (_config.showActionButtons === undefined) {
+      _config.showActionButtons = _config.selectionMode === 'range' || mode === 'time' || mode === 'daytime';
+    }
+
+    if (_config.showActionButtons) {
+      _config.closeOnSelect = false;
+    }
+
+    // A range is two values joined by a separator; free-text editing of that is
+    // ambiguous, so the input is display-only.
+    if (_config.selectionMode === 'range' && (!config || config.disableKeypress === undefined)) {
+      _config.disableKeypress = true;
     }
 
     // moment.locale(_config.locale);
@@ -87,12 +105,14 @@ export class DatePickerModalService {
       locale: pickerConfig.locale,
       returnedValueType: pickerConfig.returnedValueType,
       showGoToCurrent: pickerConfig.showGoToCurrent,
-      unSelectOnClick: pickerConfig.unSelectOnClick
+      unSelectOnClick: pickerConfig.unSelectOnClick,
+      selectionMode: pickerConfig.selectionMode
     };
   }
 
   getDayTimeConfigService(pickerConfig: IDatePickerModalConfig): ITimeSelectConfig {
-    return this.daytimeCalendarService.getConfig(pickerConfig);
+    // The daytime panel owns a single moment, so it never runs in range mode.
+    return this.daytimeCalendarService.getConfig({...pickerConfig, selectionMode: 'single'});
   }
 
   getTimeConfigService(pickerConfig: IDatePickerModalConfig): ITimeSelectConfig {

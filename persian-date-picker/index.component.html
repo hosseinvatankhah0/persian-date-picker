@@ -9,8 +9,9 @@
         [minDate]="normalizedMinDate"
         [minTime]="minTime"
         [mode]="mode"
+        [selectionMode]="selectionMode"
         [fontSize]="fontSize"
-        [ngModel]="dateObject"
+        [ngModel]="pickerValue"
         [ngModelOptions]="standaloneNgModelOptions"
         [placeholder]="placeholder"
         [required]="required"
@@ -18,12 +19,15 @@
         dir="ltr"
         theme="dp-material">
    </dp-date-picker-modal>
-    <span *ngIf="dateObject"
+    <button *ngIf="hasValue"
+        type="button"
         class="remove-icon"
+        [attr.aria-label]="locale === 'fa' ? 'پاک کردن تاریخ' : 'Clear date'"
         [class.disabled]="disabled"
-        (click)="!disabled && clearDate($event)">
-      <i class="far fa-times"></i>
-   </span>
+        [disabled]="disabled"
+        (click)="clearDate($event)">
+      <i class="far fa-times" aria-hidden="true"></i>
+   </button>
  </ng-container>
 
   <ng-container *ngIf="pickerType === 'inline'">
@@ -36,8 +40,9 @@
         [minDate]="normalizedMinDate"
         [minTime]="minTime"
         [mode]="mode"
+        [selectionMode]="selectionMode"
         [fontSize]="fontSize"
-        [ngModel]="dateObject"
+        [ngModel]="pickerValue"
         [ngModelOptions]="standaloneNgModelOptions"
         [placeholder]="placeholder"
         [required]="required"
@@ -45,11 +50,14 @@
         dir="ltr"
         theme="dp-material">
    </dp-date-picker-modal>
-    <span *ngIf="dateObject"
+    <button *ngIf="hasValue"
+        type="button"
         class="remove-icon inline-remove"
+        [attr.aria-label]="locale === 'fa' ? 'پاک کردن تاریخ' : 'Clear date'"
         [class.disabled]="disabled"
-        (click)="!disabled && clearDate($event)">
-      <i class="far fa-times"></i>
-   </span>
+        [disabled]="disabled"
+        (click)="clearDate($event)">
+      <i class="far fa-times" aria-hidden="true"></i>
+   </button>
  </ng-container>
 </div>
