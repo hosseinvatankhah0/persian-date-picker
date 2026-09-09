@@ -51,6 +51,7 @@
   </div>
   <div #dialog
       class="kendo-datepicker-dialog"
+      [attr.popover]="componentConfig().dropdown ? null : 'manual'"
       [hidden]="!isModalOpen() && !componentConfig().hideInputContainer">
     @if (isModalOpen() || componentConfig().hideInputContainer) {
     <div #container

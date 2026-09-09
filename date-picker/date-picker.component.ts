@@ -359,6 +359,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
       return;
     }
     this.isModalOpen.set(true);
+    this.showDialogInTopLayerAfterRender();
     this.isFocusedTrigger = true;
     setTimeout(() => {
       this.hideStateHelper = false;
@@ -374,12 +375,14 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     this.isModalOpen.set(true);
     this.onOpen.emit();
     this.cd.markForCheck();
+    this.showDialogInTopLayerAfterRender();
     this.focusDialogAfterRender();
     this.listenForOutsideClick();
   }
 
   hideCalendar() {
     if (!this.isModalOpen()) return;
+    this.hideDialogFromTopLayer();
     this.isModalOpen.set(false);
     this.onTouchedCallback();
     const dayRef = this.dayCalendarRef();
@@ -432,6 +435,34 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
       const focusable = container.querySelectorAll<HTMLElement>(DatePickerModalComponent.FOCUSABLE_SELECTOR);
       (preferred || focusable[0] || container).focus();
     }, 0);
+  }
+
+  /**
+   * A very large z-index still cannot escape an ancestor stacking context
+   * (for example a transformed layout next to an aside). The Popover API puts
+   * the true modal in the browser's top layer, above every normal stacking
+   * context. Browsers without the API keep the existing fixed/z-index layout.
+   */
+  private showDialogInTopLayerAfterRender() {
+    if (this.componentConfig().dropdown) return;
+
+    setTimeout(() => {
+      const dialog = this.dialogElement()?.nativeElement as HTMLElement | undefined;
+      if (!dialog || !this.isModalOpen() || typeof dialog.showPopover !== 'function') return;
+
+      if (!dialog.matches(':popover-open')) {
+        dialog.showPopover();
+      }
+    }, 0);
+  }
+
+  private hideDialogFromTopLayer() {
+    const dialog = this.dialogElement()?.nativeElement as HTMLElement | undefined;
+    if (!dialog || typeof dialog.hidePopover !== 'function') return;
+
+    if (dialog.matches(':popover-open')) {
+      dialog.hidePopover();
+    }
   }
 
   /**
@@ -645,6 +676,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   }
 
   ngOnDestroy() {
+    this.hideDialogFromTopLayer();
     this.handleInnerElementClickUnlisteners.forEach(ul => ul());
     this.stopGlobalListeners();
   }

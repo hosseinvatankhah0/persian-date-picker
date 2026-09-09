@@ -75,8 +75,6 @@ dp-date-picker-modal .dp-picker-actions {
      is easy to mistake for a real hook when reading this file, so it's
      gone rather than dead-but-harmless. */
   dp-date-picker-modal {
-    display: flex;
-
     &.dp-material {
       /* Fills whatever the host gives it instead of a fixed px default — a
          form control should size to its container, not the other way
@@ -211,6 +209,12 @@ dp-date-picker-modal:not(.inline-picker) {
     justify-content: center;
     padding: 20px;
     box-sizing: border-box;
+    /* Reset the user-agent popover box while keeping it in the browser's top
+       layer, where page stacking contexts (including asides) cannot cover it. */
+    width: auto;
+    height: auto;
+    margin: 0;
+    border: 0;
   }
 
   .kendo-datepicker-dialog:not([hidden]) .dp-popup {
