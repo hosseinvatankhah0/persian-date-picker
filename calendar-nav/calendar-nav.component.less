@@ -22,6 +22,14 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 8px;
+      /* Explicit, not inherited — a host page's own global styles (even an
+         unscoped `div { direction: … }`) must not be able to flip this by
+         accident. .rtl below is the only thing that changes it. */
+      direction: ltr;
+    }
+
+    &.rtl .dp-calendar-nav-container {
+      direction: rtl;
     }
 
     .dp-nav-date-btn {
@@ -72,11 +80,6 @@
     .dp-calendar-secondary-nav-left, .dp-calendar-secondary-nav-right {
       .double-arrow(45deg);
       padding: 0;
-    }
-
-    .dp-calendar-secondary-nav-right {
-      left: initial;
-      right: initial;
     }
 
     .dp-calendar-nav-left {

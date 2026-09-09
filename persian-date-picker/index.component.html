@@ -1,4 +1,4 @@
-<div class="persian-date-picker-wrapper" [class.disabled]="disabled">
+<div class="persian-date-picker-wrapper" [class.disabled]="disabled" [class.has-calendar-icon]="showCalendarIcon">
   <ng-container *ngIf="pickerType === 'modal'">
     <dp-date-picker-modal
         (ngModelChange)="onModelChange($event)"
@@ -11,6 +11,7 @@
         [mode]="mode"
         [selectionMode]="selectionMode"
         [fontSize]="fontSize"
+        [showCalendarIcon]="showCalendarIcon"
         [ngModel]="pickerValue"
         [ngModelOptions]="standaloneNgModelOptions"
         [placeholder]="placeholder"
@@ -26,7 +27,9 @@
         [class.disabled]="disabled"
         [disabled]="disabled"
         (click)="clearDate($event)">
-      <i class="far fa-times" aria-hidden="true"></i>
+      <svg class="remove-icon-glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M5 5L19 19M19 5L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
    </button>
  </ng-container>
 
@@ -42,6 +45,7 @@
         [mode]="mode"
         [selectionMode]="selectionMode"
         [fontSize]="fontSize"
+        [showCalendarIcon]="showCalendarIcon"
         [ngModel]="pickerValue"
         [ngModelOptions]="standaloneNgModelOptions"
         [placeholder]="placeholder"
@@ -52,12 +56,14 @@
    </dp-date-picker-modal>
     <button *ngIf="hasValue"
         type="button"
-        class="remove-icon inline-remove"
+        class="remove-icon"
         [attr.aria-label]="locale === 'fa' ? 'پاک کردن تاریخ' : 'Clear date'"
         [class.disabled]="disabled"
         [disabled]="disabled"
         (click)="clearDate($event)">
-      <i class="far fa-times" aria-hidden="true"></i>
+      <svg class="remove-icon-glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M5 5L19 19M19 5L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
    </button>
  </ng-container>
 </div>

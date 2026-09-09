@@ -69,7 +69,12 @@ dp-date-picker-modal .dp-picker-actions {
 }
 
 & {
-  dp-date-picker, dp-date-picker-modal {
+  /* The component's real (only) selector is dp-date-picker-modal — see
+     date-picker.component.ts. "dp-date-picker" matches nothing in this
+     package; it was a leftover from before the component was renamed and
+     is easy to mistake for a real hook when reading this file, so it's
+     gone rather than dead-but-harmless. */
+  dp-date-picker-modal {
     display: flex;
 
     &.dp-material {
@@ -167,6 +172,10 @@ dp-date-picker-modal .dp-picker-actions {
 
   .datepicker-icon {
     line-height: 1;
+    /* Sized via the fontSize input (bound as width/height directly on the
+       svg); flex-shrink guards it in a tight input next to long placeholder
+       text. */
+    flex-shrink: 0;
   }
 }
 

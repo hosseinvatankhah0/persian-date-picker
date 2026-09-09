@@ -46,8 +46,16 @@ export class CalendarNavComponent {
 
   labels = computed(() => this.labelsByLocale[this.locale()] || this.labelsByLocale['en']);
 
+  /** Drives the nav bar's own direction explicitly (see the .rtl class in
+   * calendar-nav.component.less) instead of leaving it to whatever direction
+   * happens to be ambient in the host page — a bare, unscoped `div { direction:
+   * rtl }` in a consumer's own global styles previously had nothing of ours to
+   * out-specify at this element, so it silently flipped the nav bar even on
+   * otherwise-LTR pages. */
+  isRtl = computed(() => this.locale() === 'fa');
+
   @HostBinding('class') get themeClass() {
-    return this.theme() || '';
+    return [this.theme(), this.isRtl() ? 'rtl' : ''].filter(Boolean).join(' ');
   }
 
   onLeftNav = output<void>();

@@ -19,6 +19,13 @@ export interface IConfig {
   hideInputContainer?: boolean;
   hideOnOutsideClick?: boolean;
   /**
+   * Renders as a small popup anchored just below the input instead of a
+   * full-viewport backdrop dialog. Also relaxes aria-modal to false, since
+   * the rest of the page stays genuinely interactive while this is open —
+   * unlike a real modal, it does not block anything behind it.
+   */
+  dropdown?: boolean;
+  /**
    * Show the confirm/close bar. When omitted the picker decides: modes that
    * build a value across several clicks (range, time, daytime) get the bar and
    * only commit on confirm; single day/month selection commits immediately.

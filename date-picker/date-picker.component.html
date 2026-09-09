@@ -15,15 +15,26 @@
         class="dp-picker-input"
         [id]="inputId"
         type="text"/>
-    <button #inputElementLabel
-            (click)="inputFocused()"
-            [attr.aria-label]="componentConfig().locale === 'fa' ? 'باز کردن تقویم' : 'Open calendar'"
-            [class.disabled]="disabled()"
-            [disabled]="disabled()"
-            class="datepicker-button"
-            type="button">
-      <i class="fa-duotone fa-calendar datepicker-icon" [style.fontSize.px]="fontSize()" aria-hidden="true"></i>
-    </button>
+    @if (showCalendarIcon()) {
+      <button #inputElementLabel
+              (click)="inputFocused()"
+              [attr.aria-label]="componentConfig().locale === 'fa' ? 'باز کردن تقویم' : 'Open calendar'"
+              [class.disabled]="disabled()"
+              [disabled]="disabled()"
+              class="datepicker-button"
+              type="button">
+        <svg class="datepicker-icon"
+             viewBox="0 0 24 24"
+             fill="none"
+             aria-hidden="true"
+             [style.width.px]="fontSize()"
+             [style.height.px]="fontSize()">
+          <rect x="3.5" y="5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M3.5 9.5H20.5" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M8 3V6.5M16 3V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </button>
+    }
     @if (showMinDateIsNotValid()) {
       <div class="date-error" role="alert">تاریخ انتخابی نمی‌تواند از
         {{ transformToJalali(minDate()) }}
@@ -45,7 +56,7 @@
     <div #container
          (keydown)="onContainerKeydown($event)"
          [attr.aria-label]="dialogLabel()"
-         aria-modal="true"
+         [attr.aria-modal]="componentConfig().dropdown ? null : 'true'"
          role="dialog"
          tabindex="-1">
       <div

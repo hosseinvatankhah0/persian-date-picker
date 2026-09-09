@@ -93,6 +93,10 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   mode = input<CalendarMode>('day');
   placeholder = input<string>('');
   fontSize = input<number>(23);
+  /** Shown by default as a visible affordance that the input opens a picker;
+   * set to false to rely purely on focusing/clicking the input itself
+   * (openOnFocus/openOnClick already do that regardless of this flag). */
+  showCalendarIcon = input<boolean>(true);
   disabled = input<boolean>(false);
   displayDate = input<any>();
   theme = input<string>('');
@@ -371,6 +375,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     this.onOpen.emit();
     this.cd.markForCheck();
     this.focusDialogAfterRender();
+    this.listenForOutsideClick();
   }
 
   hideCalendar() {
@@ -383,10 +388,32 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     }
     this.onClose.emit();
     this.cd.markForCheck();
+    this.stopGlobalListeners();
     // Hand keyboard focus back to whatever opened the dialog rather than
     // dropping it on <body>, which is what closing a modal usually does wrong.
     this.lastFocusedElement?.focus();
     this.lastFocusedElement = null;
+  }
+
+  /**
+   * A full-viewport backdrop already intercepts every click outside the
+   * popup content, so the existing (click) host listener closing on a
+   * backdrop click is enough for the true-modal case. A dropdown has no
+   * backdrop — the rest of the page stays clickable — so closing on an
+   * actually-outside click needs a real document-level listener. Registered
+   * only while open, and only once (a listener added mid-dispatch of the
+   * very click that opened the picker does not receive that same event per
+   * the DOM event dispatch algorithm, so this needs no extra debouncing).
+   */
+  private listenForOutsideClick() {
+    if (!this.componentConfig().hideOnOutsideClick) return;
+    const host = this.elemRef.nativeElement as HTMLElement;
+    const unlisten = this.renderer.listen('document', 'click', (event: MouseEvent) => {
+      if (!host.contains(event.target as Node)) {
+        this.closeModal();
+      }
+    });
+    this.globalListnersUnlisteners.push(unlisten);
   }
 
   /**

@@ -9,9 +9,28 @@
     cursor: not-allowed;
   }
 
+  /* Reserved unconditionally (not just while a value — and so the clear
+     button — is present) so typed text never shifts sideways the moment a
+     value is entered or cleared. Only this wrapper adds the clear button, so
+     the base .dp-picker-input style carries no padding for it; a standalone
+     <dp-date-picker-modal> needs none. Specificity is bumped on purpose
+     (three classes vs. the base rule's two) so it reliably wins regardless
+     of Angular's global-style bundling order. */
+  .dp-material .dp-picker-input {
+    padding-left: 34px;
+  }
+
+  &.has-calendar-icon .dp-material .dp-picker-input {
+    padding-right: 40px;
+  }
+
+  /* Clear sits on the opposite physical edge from the calendar icon (right:
+     5px, in date-picker.component.less) so the two never crowd together
+     regardless of which one(s) are actually visible — the icon is optional
+     and off by default, clear only shows once there's a value to remove. */
   .remove-icon {
     position: absolute;
-    right: 32px;
+    left: 8px;
     top: 50%;
     transform: translateY(-50%);
     /* Reset browser button chrome now that this is a real <button>, not a <span>. */
@@ -29,6 +48,11 @@
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+
+    .remove-icon-glyph {
+      width: 14px;
+      height: 14px;
+    }
 
     &:hover:not(:disabled) {
       color: #e53935;
@@ -49,23 +73,43 @@
 
   .custom-date-picker {
     width: 100%;
+    /* Anchor point for the "inline" dropdown below — its positioned
+       ancestor, not the page's. */
+    position: relative;
 
-    &.inline-picker {
-      .kendo-datepicker-dialog {
-        display: block !important;
-        position: relative !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        border-radius: 8px !important;
-        overflow: hidden !important;
-        margin-top: 0 !important;
+    /* pickerType="inline": a small popup anchored under the input, not a
+       permanently-visible calendar. The input stays; only the popup toggles
+       — [hidden] (set by isModalOpen(), see date-picker.component.html)
+       already does that once nothing here forces it open, which the old
+       `display: block !important` below used to do. No backdrop, so this
+       relies on componentConfig().dropdown wiring up a real outside-click
+       listener (date-picker.component.ts) instead of the full-viewport
+       backdrop the modal variant uses to catch outside clicks. */
+    &.inline-picker .kendo-datepicker-dialog:not([hidden]) {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 1000;
+      display: block;
+      background: transparent;
+      padding: 0;
+    }
+
+    &.inline-picker .kendo-datepicker-dialog:not([hidden]) .dp-popup {
+      position: relative;
+      left: auto;
+      transform: none;
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+      overflow: hidden;
+      animation: dpModalPop 0.16s ease-out;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &.inline-picker .kendo-datepicker-dialog:not([hidden]) .dp-popup {
+        animation: none;
       }
     }
-  }
-
-  .remove-icon.inline-remove {
-    right: 8px;
-    top: 8px;
-    transform: none;
   }
 }
 

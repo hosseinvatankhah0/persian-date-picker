@@ -49,6 +49,40 @@ interface IDemo {
       <pre class="pg-value">{{ format(inlineRange.value) }}</pre>
     </section>
 
+    <section class="pg-grid" style="margin-top:16px">
+      <article class="pg-card">
+        <h2>آیکون تقویم فعال</h2>
+        <p class="pg-hint">
+          پیش‌فرض بدون آیکون است — کلیک/فوکوس روی خود اینپوت تقویم را باز می‌کند.
+          اینجا <code>showCalendarIcon</code> روشن است تا محل آیکون (راست) و دکمهٔ
+          پاک‌کردن (چپ) — که هیچ‌وقت روی هم نمی‌افتند — دیده شود.
+        </p>
+        <app-persian-date-picker
+          [formControl]="iconDemo"
+          mode="day"
+          [showCalendarIcon]="true"
+          placeholder="انتخاب کنید">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(iconDemo.value) }}</pre>
+      </article>
+
+      <article class="pg-card" dir="ltr">
+        <h2>English locale (LTR)</h2>
+        <p class="pg-hint">
+          Nav bar direction is now explicit per-instance instead of inherited
+          from the host page — this stays LTR even if a host global stylesheet
+          sets <code>direction</code> on plain <code>div</code>s.
+        </p>
+        <app-persian-date-picker
+          [formControl]="ltrDemo"
+          mode="month"
+          locale="en"
+          placeholder="Pick a month">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(ltrDemo.value) }}</pre>
+      </article>
+    </section>
+
     <p class="pg-note">تعداد رویدادهای onChange در حالت بازه: {{ rangeChanges() }}</p>
   `
 })
@@ -96,6 +130,8 @@ export class PlaygroundComponent {
   ];
 
   readonly inlineRange = new FormControl<string[] | null>(null);
+  readonly iconDemo = new FormControl('');
+  readonly ltrDemo = new FormControl('');
 
   constructor() {
     this.dayRange.valueChanges.subscribe(() => this.rangeChanges.update(n => n + 1));

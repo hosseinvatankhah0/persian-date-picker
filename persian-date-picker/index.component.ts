@@ -11,7 +11,8 @@ import {
   OnChanges,
   OnInit,
   Output,
-  SimpleChanges
+  SimpleChanges,
+  ViewEncapsulation
 } from '@angular/core';
 import moment, { Moment } from 'jalali-moment';
 import { DatePickerModalComponent } from '../date-picker/date-picker.component';
@@ -34,7 +35,20 @@ export const PERSIAN_DATE_PICKER_VALUE_ACCESSOR: any = {
     DatePickerModalComponent,
     FormsModule
   ],
-  providers: [PERSIAN_DATE_PICKER_VALUE_ACCESSOR]
+  providers: [PERSIAN_DATE_PICKER_VALUE_ACCESSOR],
+  /* Every other component in this library uses ViewEncapsulation.None — this
+   * was the one exception, and it matters: this file's own stylesheet reaches
+   * into elements rendered by the child <dp-date-picker-modal>'s template
+   * (.dp-picker-input, .dp-popup, .kendo-datepicker-dialog). With emulated
+   * encapsulation (the default this had been using), Angular stamps an
+   * _ngcontent attribute onto every simple selector in a compiled rule,
+   * including ones for elements the child renders — but those elements never
+   * carry this component's _ngcontent attribute, only their own component's
+   * (or none, since the child is also None). The compiled selectors could
+   * never match anything. None makes every rule here plain, unscoped CSS,
+   * consistent with how the rest of the library already styles itself.
+   */
+  encapsulation: ViewEncapsulation.None
 })
 export class PersianDatePickerComponent implements ControlValueAccessor, OnInit, OnChanges {
   private readonly cdr = inject(ChangeDetectorRef);
@@ -63,6 +77,9 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
   @Output() inputModelChange = new EventEmitter<string>();
   @Input() pickerType: 'modal' | 'inline' = 'modal';
   @Input() fontSize = 23;
+  /** Shown by default as a visible affordance that the input opens a picker;
+   * set to false to rely purely on focusing/clicking the input itself. */
+  @Input() showCalendarIcon = true;
   /** 'range' turns the day/month calendar into a from-to picker. */
   @Input() selectionMode: TSelectionMode = 'single';
   /** Overrides the automatic confirm/close bar decision. */
@@ -262,9 +279,14 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     if (this.showActionButtons !== undefined) {
       this.config.showActionButtons = this.showActionButtons;
     }
+    /* "inline" means a small popup anchored under the input — same input,
+       same as "modal" otherwise, just without the full-viewport backdrop.
+       It is not a permanently-visible, input-less calendar widget: the
+       input stays, and the calendar toggles open/closed exactly like the
+       modal variant does. */
     this.inlineConfig = {
       ...this.config,
-      hideInputContainer: true,
+      dropdown: true,
       openOnClick: true,
       openOnFocus: true,
     };
