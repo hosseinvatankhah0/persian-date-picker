@@ -1,39 +1,46 @@
 @import '../common/styles/variables';
 
-/* One row, always: summary on the leading edge, actions on the trailing edge. */
+/* The range summary (when present) sits on its own line above the buttons,
+   because the buttons need the full row width to split evenly 50/50 — they
+   can't do that while sharing a row with a text label. */
 dp-date-picker-modal .dp-picker-actions {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-top: 1px solid @c-divider;
-
-  .dp-actions-spacer {
-    flex: 1 1 auto;
-  }
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid @border-card-color;
 
   .dp-range-summary {
-    font-size: 12px;
-    color: @c-text-muted;
+    padding: 0 2px;
+    font-size: 11px;
+    color: @icon-color;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 55%;
+    /* Kept as a safety net, not a layout default: an unusually long locale's
+       formatted range string could still overflow the popup on a narrow
+       screen without it. */
+    max-width: 100%;
+  }
+
+  .dp-actions-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 
   .dp-btn {
-    flex: 0 0 auto;
     border: none;
     background: transparent;
     font: inherit;
+    font-size: 12.5px;
     font-weight: 500;
     cursor: pointer;
-    min-height: 34px;
-    padding: 0 16px;
+    min-height: 28px;
+    padding: 0 10px;
     border-radius: @radius-sm;
-    transition: background 0.15s ease, opacity 0.15s ease;
+    transition: background @transition-fast, opacity @transition-fast;
 
     &:focus-visible {
       outline: 2px solid @c-primary-solid;
@@ -47,16 +54,17 @@ dp-date-picker-modal .dp-picker-actions {
   }
 
   .dp-btn-close {
-    color: @c-text-muted;
+    color: @icon-color;
+    background: @background-button-light;
 
-    &:hover:not(:disabled) { background: @c-hover; }
+    &:hover:not(:disabled) { background: darken(@background-button-light, 4%); }
   }
 
   .dp-btn-confirm {
-    background: @c-primary-solid;
+    background: @background-button-selected;
     color: @c-white;
 
-    &:hover:not(:disabled) { background: darken(@c-primary-solid, 8%); }
+    &:hover:not(:disabled) { background: @background-button-dark; }
   }
 }
 
@@ -65,12 +73,26 @@ dp-date-picker-modal .dp-picker-actions {
     display: flex;
 
     &.dp-material {
+      /* Fills whatever the host gives it instead of a fixed px default — a
+         form control should size to its container, not the other way
+         around. A standalone <input> with no container at all still gets a
+         reasonable size from the browser's own text-input default. */
       .dp-picker-input {
         box-sizing: border-box;
-        height: @basic-height;
-        width: @basic-width;
+        width: 100%;
+        height: 38px;
+        padding: 8px 12px;
+        border: 1px solid @border-card-color;
+        border-radius: @radius-sm;
         font-size: 13px;
         outline: none;
+        background: @c-white;
+        transition: border-color @transition-fast, box-shadow @transition-fast;
+
+        &:focus {
+          border-color: @c-primary-solid;
+          box-shadow: 0 0 0 3px fade(@c-primary-solid, 15%);
+        }
       }
     }
 
@@ -92,7 +114,11 @@ dp-date-picker-modal .dp-picker-actions {
     background: @c-white;
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
     border: none;
-    border-radius: 12px;
+    /* A card this size (250px+ wide) keeps a slightly bigger radius than the
+       @radius-sm/md buttons inside it — a small radius nested in a large
+       radius reads as intentional, the reverse looks like a sharp corner
+       poking out of a soft one. */
+    border-radius: 8px;
     z-index: 1;
     white-space: nowrap;
     transform: translateX(-50%);
@@ -182,7 +208,7 @@ dp-date-picker-modal:not(.inline-picker) {
     position: relative;
     left: auto;
     transform: none;
-    border-radius: 16px;
+    border-radius: 10px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
     /* No padding: the action bar's divider must span the full card width. */
     padding: 0;

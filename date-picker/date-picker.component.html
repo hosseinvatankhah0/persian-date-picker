@@ -110,13 +110,14 @@
                 {{ inputElementValue() || (componentConfig().locale === 'fa' ? 'بازه را انتخاب کنید' : 'Pick a range') }}
               </span>
             }
-            <span class="dp-actions-spacer"></span>
-            <button type="button" class="dp-btn dp-btn-close" (click)="closeModal()">
-              {{ componentConfig().locale === 'fa' ? 'بستن' : 'Cancel' }}
-            </button>
-            <button type="button" class="dp-btn dp-btn-confirm" [disabled]="!canConfirm" (click)="confirmModal()">
-              {{ componentConfig().locale === 'fa' ? 'تایید' : 'Confirm' }}
-            </button>
+            <div class="dp-actions-row">
+              <button type="button" class="dp-btn dp-btn-close" (click)="closeModal()">
+                {{ componentConfig().locale === 'fa' ? 'بستن' : 'Cancel' }}
+              </button>
+              <button type="button" class="dp-btn dp-btn-confirm" [disabled]="!canConfirm" (click)="confirmModal()">
+                {{ componentConfig().locale === 'fa' ? 'تایید' : 'Confirm' }}
+              </button>
+            </div>
           </div>
         }
       </div>

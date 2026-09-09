@@ -28,6 +28,9 @@
     .dp-months-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
+      /* The gutter between chips comes from this gap, not a max-width cap on
+         the chip itself, so the chip can fill its cell at any grid width. */
+      gap: 6px 10px;
       margin-bottom: 8px;
     }
 
@@ -46,12 +49,11 @@
       z-index: 1;
       box-sizing: border-box;
       /* A wide element with a huge radius reads as an ellipse, so keep the
-         corner radius proportional to the height instead. */
+         corner radius proportional to the height instead. Width fills the
+         grid cell — see .dp-months-row's gap for the gutter between chips. */
       width: 100%;
-      max-width: 78px;
       height: 40px;
       padding: 0 6px;
-      margin: 0 auto;
       cursor: pointer;
       font-size: 13px;
       line-height: 1;
@@ -80,9 +82,11 @@
       }
 
       &.dp-current-month:not(.dp-selected) {
-        /* A 2px solid ring reads as a heavy second button; a hairline tint
-           plus a weight bump marks "today's month" without shouting. */
-        box-shadow: inset 0 0 0 1px fade(@c-primary-solid, 42%);
+        /* Mirrors .dp-current-day: a dashed ring plus a soft halo, so
+           "today" reads the same way in both the day grid and the month
+           grid instead of two different conventions. */
+        border: 1px dashed @border-selected-color;
+        box-shadow: 0 0 0 3px fade(@c-primary-solid, 8%);
         color: @c-primary-solid;
         font-weight: 500;
       }

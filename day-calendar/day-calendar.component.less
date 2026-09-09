@@ -148,10 +148,14 @@
         }
       }
 
+      /* "Today" gets a dashed ring rather than a solid one, so it reads as a
+         location marker distinct from the solid-filled .dp-selected chip; a
+         soft halo behind it adds depth without a second hard outline. */
       .dp-current-day {
         border-radius: 50%;
-        border: 2px solid @c-primary-solid;
-        line-height: 32px;
+        border: 1px dashed @border-selected-color;
+        box-shadow: 0 0 0 3px fade(@c-primary-solid, 8%);
+        line-height: 34px;
       }
 
       .dp-calendar-day:focus-visible {

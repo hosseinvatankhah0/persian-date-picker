@@ -13,23 +13,39 @@
 @c-hover: #f1f3f4;
 @c-divider: #ececf0;
 
+// Semantic aliases, named after their role rather than their raw value, so a
+// selector's intent reads at a glance (an icon color vs. a border color vs. a
+// button fill, even where several currently share the same hex).
+@icon-color: @c-text-muted;
+@border-selected-color: @c-primary-solid;
+@border-card-color: @c-divider;
+@background-button-selected: @c-primary-solid;
+@background-button-dark: darken(@c-primary-solid, 8%);
+@background-button-light: @c-hover;
+
 // Tint used for the connected range band, light enough to keep day numbers readable.
 @c-range-band: fade(@c-primary-solid, 12%);
 @c-range-band-preview: fade(@c-primary-solid, 7%);
 @c-accent-hover: fade(@c-primary-solid, 10%);
 
 @cell-size: 36px;
-@radius-sm: 8px;
-@radius-md: 12px;
-@radius-lg: 12px;
+// Kept small and close together on purpose: a calendar is a grid of many
+// small controls, and a large radius on each one reads as "bubbly" rather
+// than crisp. @radius-md is a shade bigger than @radius-sm/@radius-lg only
+// because it sits on wider content (the month chip, the time digit box) that
+// needs a touch more room to still look intentional rather than clipped.
+@radius-sm: 4px;
+@radius-md: 6px;
+@radius-lg: 6px;
 
 // Cap on the outer ends of a range band. Kept in px, not %, because a
 // percentage radius takes its horizontal half from the cell width and its
 // vertical half from the band height, so it turns into an ellipse whenever the
-// grid column is wider than it is tall. These are derived from band height:
-// day bands are 32px tall, month bands 40px.
-@range-cap-day: 14px;
-@range-cap-month: 12px;
+// grid column is wider than it is tall. Sized a bit above @radius-md on
+// purpose — they close off a much taller band (32-40px) than a chip corner,
+// so a matching small radius would look like an abrupt square cut, not a cap.
+@range-cap-day: 8px;
+@range-cap-month: 8px;
 
 @transition-fast: 0.15s ease;
 
@@ -46,9 +62,6 @@
   white-space: nowrap;
   border: 0;
 }
-
-@basic-height: 30px;
-@basic-width: 252px;
 
 .arrow(@deg) {
   &::before {

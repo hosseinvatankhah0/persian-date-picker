@@ -100,26 +100,30 @@
       cursor: pointer;
     }
 
+    /* A full-strength solid fill reads as loud next to the plain ghost
+       prev/next icons beside it, so this stays the same family (round,
+       transparent by default) with only a small colored dot marking it as
+       the accent action — smaller and calmer than a solid disc. */
     .dp-current-location-btn {
       position: relative;
       top: 0;
-      height: 24px;
-      width: 24px;
+      height: 22px;
+      width: 22px;
       vertical-align: middle;
-      background: @c-primary-solid;
+      background: fade(@c-primary-solid, 12%);
       border: none;
       outline: none;
       border-radius: 50%;
       box-shadow: none;
       cursor: pointer;
-      transition: background 0.15s ease, transform 0.1s ease;
+      transition: background @transition-fast, transform 0.1s ease;
 
       &::after {
         content: '';
         display: block;
-        width: 8px;
-        height: 8px;
-        background: @c-white;
+        width: 6px;
+        height: 6px;
+        background: @c-primary-solid;
         border-radius: 50%;
         position: absolute;
         top: 50%;
@@ -128,8 +132,8 @@
       }
 
       &:hover {
-        background: darken(@c-primary-solid, 10%);
-        transform: scale(1.1);
+        background: fade(@c-primary-solid, 20%);
+        transform: scale(1.08);
       }
     }
 
@@ -162,7 +166,6 @@
 
       .dp-nav-header-btn {
         height: 28px;
-        min-width: 80px;
         border: none;
         background: transparent;
         outline: none;
