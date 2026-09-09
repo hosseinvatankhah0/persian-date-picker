@@ -39,7 +39,7 @@ export const PERSIAN_DATE_PICKER_VALUE_ACCESSOR: any = {
   /* Every other component in this library uses ViewEncapsulation.None — this
    * was the one exception, and it matters: this file's own stylesheet reaches
    * into elements rendered by the child <dp-date-picker-modal>'s template
-   * (.dp-picker-input, .dp-popup, .kendo-datepicker-dialog). With emulated
+   * (.dp-picker-input, .dp-popup, .dp-picker-dialog). With emulated
    * encapsulation (the default this had been using), Angular stamps an
    * _ngcontent attribute onto every simple selector in a compiled rule,
    * including ones for elements the child renders — but those elements never
@@ -169,18 +169,34 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     this.cdr.markForCheck();
   }
 
+  /**
+   * The moment's own calendar system (Jalali vs. Gregorian) is decided here,
+   * once, from `this.locale` — never left to whichever locale happened to be
+   * active at parse time. Without this, a value written in through
+   * writeValue()/ngModel in the "other" calendar (e.g. a Gregorian date from
+   * a server, while this picker runs in `locale="fa"`) would carry a
+   * mismatched locale, and only stayed correct downstream because both the
+   * emit path and the child component happen to re-apply .locale() of their
+   * own — accidental correctness, not guaranteed. Centralizing it here
+   * removes that footgun for any other current or future reader of
+   * `dateObject`.
+   */
   private normalizeToMoment(obj: any): Moment | null {
     if (!obj) {
       return null;
     }
 
+    const parsed = this.parseToMoment(obj);
+    return parsed && parsed.isValid() ? parsed.locale(this.locale) : null;
+  }
+
+  private parseToMoment(obj: any): Moment | null {
     if (moment.isMoment(obj)) {
-      return obj.isValid() ? obj.clone().locale(this.locale) : null;
+      return obj.clone();
     }
 
     if (obj instanceof Date) {
-      const m = moment(obj);
-      return m.isValid() ? m : null;
+      return moment(obj);
     }
 
     if (typeof obj !== 'string') {
@@ -214,7 +230,7 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     }
 
     const g = moment(value);
-    return g.isValid() && g.year() > 1500 ? g : null;
+    return g.year() > 1500 ? g : null;
   }
 
   registerOnChange(fn: any): void {
@@ -260,7 +276,11 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
         format = 'YYYY/MM/DD HH:mm:ss';
         break;
       case 'month':
-        format = this.locale === 'fa' ? 'jYYYY/jMM' : 'YYYY/MM';
+        /* Uppercase tokens, same as every other mode: jalali-moment reads
+           these against whichever calendar `.locale()` is set to, so one
+           format string covers both locales instead of special-casing 'fa'
+           with an explicit j-prefix that meant the exact same thing here. */
+        format = 'YYYY/MM';
         break;
       case 'time':
         format = 'HH:mm:ss';
@@ -270,7 +290,6 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     this.config = {
       locale: this.locale,
       unSelectOnClick: false,
-      showMultipleYearsNavigation: true,
       selectionMode: this.selectionMode,
       rangeSeparator: this.rangeSeparator,
       format,

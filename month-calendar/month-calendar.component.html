@@ -2,17 +2,13 @@
     (onGoToCurrent)="goToCurrent()"
     (onLabelClick)="toggleCalendarMode()"
     (onLeftNav)="onLeftNavClick()"
-    (onLeftSecondaryNav)="onLeftSecondaryNavClick()"
     (onRightNav)="onRightNavClick()"
-    (onRightSecondaryNav)="onRightSecondaryNavClick()"
     [isLabelClickable]="componentConfig().isNavHeaderBtnClickable || false"
     [label]="showYearSelector() ? yearRange()[0] + ' – ' + yearRange()[20] : navLabel()"
     [locale]="componentConfig().locale || 'fa'"
     [showGoToCurrent]="shouldShowCurrent()"
     [showLeftNav]="showYearSelector() ? !isYearDisabled(yearRange()[0] - 1) : showLeftNav()"
     [showRightNav]="showYearSelector() ? !isYearDisabled(yearRange()[20] + 1) : showRightNav()"
-    [showLeftSecondaryNav]="!showYearSelector() && showSecondaryLeftNav()"
-    [showRightSecondaryNav]="!showYearSelector() && showSecondaryRightNav()"
     [theme]="theme() || ''">
 </dp-calendar-nav>
 

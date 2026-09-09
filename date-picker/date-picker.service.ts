@@ -100,8 +100,6 @@ export class DatePickerModalService {
       monthBtnFormat: pickerConfig.monthBtnFormat,
       monthBtnFormatter: pickerConfig.monthBtnFormatter,
       monthBtnCssClassCallback: pickerConfig.monthBtnCssClassCallback,
-      multipleYearsNavigateBy: pickerConfig.multipleYearsNavigateBy,
-      showMultipleYearsNavigation: pickerConfig.showMultipleYearsNavigation,
       locale: pickerConfig.locale,
       returnedValueType: pickerConfig.returnedValueType,
       showGoToCurrent: pickerConfig.showGoToCurrent,

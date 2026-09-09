@@ -29,6 +29,21 @@
   color: #5f6368;
 }
 
+.pg-btn {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #106CC8;
+  background: #eaf2fb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+
+  &:hover { background: #dbe9f8; }
+}
+
 .pg-value {
   margin: 12px 0 0;
   padding: 8px 10px;

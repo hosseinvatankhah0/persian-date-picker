@@ -10,7 +10,8 @@ async function run() {
   fs.mkdirSync(outDir, {recursive: true});
   const specs = [
     'month-calendar/navigation.regression.spec.ts',
-    'common/range.regression.spec.ts'
+    'common/range.regression.spec.ts',
+    'persian-date-picker/locale-output.regression.spec.ts'
   ];
   await esbuild.build({
     absWorkingDir: root,

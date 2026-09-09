@@ -84,8 +84,6 @@ export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAcce
   onGoToCurrent = output<void>();
   onLeftNav = output<INavEvent>();
   onRightNav = output<INavEvent>();
-  onLeftSecondaryNav = output<INavEvent>();
-  onRightSecondaryNav = output<INavEvent>();
 
   // Internal state
   CalendarMode = ECalendarMode;
@@ -314,14 +312,6 @@ export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAcce
 
   onMonthCalendarRightClick(event: INavEvent) {
     this.onRightNav.emit(event);
-  }
-
-  onMonthCalendarSecondaryLeftClick(event: INavEvent) {
-    this.onLeftSecondaryNav.emit(event);
-  }
-
-  onMonthCalendarSecondaryRightClick(event: INavEvent) {
-    this.onRightSecondaryNav.emit(event);
   }
 
   getWeekdayName(weekday: Moment): string {

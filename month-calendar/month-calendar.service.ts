@@ -15,8 +15,6 @@ export class MonthCalendarService {
     isNavHeaderBtnClickable: true,
     monthBtnFormat: 'MMMM',
     locale: 'fa',
-    multipleYearsNavigateBy: 10,
-    showMultipleYearsNavigation: false,
     unSelectOnClick: true
   };
   readonly GREGORIAN_DEFAULT_CONFIG: IMonthCalendarConfig = {

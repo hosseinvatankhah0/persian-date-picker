@@ -61,10 +61,8 @@
 @if (currentCalendarMode() === CalendarMode.Month) {
   <dp-month-calendar
     (onLeftNav)="onMonthCalendarLeftClick($event)"
-    (onLeftSecondaryNav)="onMonthCalendarSecondaryLeftClick($event)"
     (onNavHeaderBtnClick)="toggleCalendarMode(CalendarMode.Day)"
     (onRightNav)="onMonthCalendarRightClick($event)"
-    (onRightSecondaryNav)="onMonthCalendarSecondaryRightClick($event)"
     (onSelect)="monthSelected($event)"
     [config]="monthCalendarConfig()"
     [displayDate]="currentDateView()"

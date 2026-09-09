@@ -75,7 +75,7 @@ dp-date-picker-modal .dp-picker-actions {
      is easy to mistake for a real hook when reading this file, so it's
      gone rather than dead-but-harmless. */
   dp-date-picker-modal {
-    &.dp-material {
+    &.dp-default {
       /* Fills whatever the host gives it instead of a fixed px default — a
          form control should size to its container, not the other way
          around. A standalone <input> with no container at all still gets a
@@ -196,7 +196,7 @@ dp-date-picker-modal .dp-picker-actions {
 
 /* True modal: full-screen backdrop with centered calendar card */
 dp-date-picker-modal:not(.inline-picker) {
-  .kendo-datepicker-dialog:not([hidden]) {
+  .dp-picker-dialog:not([hidden]) {
     position: fixed;
     top: 0;
     right: 0;
@@ -217,7 +217,7 @@ dp-date-picker-modal:not(.inline-picker) {
     border: 0;
   }
 
-  .kendo-datepicker-dialog:not([hidden]) .dp-popup {
+  .dp-picker-dialog:not([hidden]) .dp-popup {
     position: relative;
     left: auto;
     transform: none;
@@ -236,13 +236,13 @@ dp-date-picker-modal:not(.inline-picker) {
   }
 
   @media (max-width: 420px) {
-    .kendo-datepicker-dialog:not([hidden]) {
+    .dp-picker-dialog:not([hidden]) {
       padding: 12px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .kendo-datepicker-dialog:not([hidden]) .dp-popup {
+    .dp-picker-dialog:not([hidden]) .dp-popup {
       animation: none;
     }
   }

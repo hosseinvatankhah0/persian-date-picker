@@ -16,11 +16,11 @@
      <dp-date-picker-modal> needs none. Specificity is bumped on purpose
      (three classes vs. the base rule's two) so it reliably wins regardless
      of Angular's global-style bundling order. */
-  .dp-material .dp-picker-input {
+  .dp-default .dp-picker-input {
     padding-left: 34px;
   }
 
-  &.has-calendar-icon .dp-material .dp-picker-input {
+  &.has-calendar-icon .dp-default .dp-picker-input {
     padding-right: 40px;
   }
 
@@ -85,7 +85,7 @@
        relies on componentConfig().dropdown wiring up a real outside-click
        listener (date-picker.component.ts) instead of the full-viewport
        backdrop the modal variant uses to catch outside clicks. */
-    &.inline-picker .kendo-datepicker-dialog:not([hidden]) {
+    &.inline-picker .dp-picker-dialog:not([hidden]) {
       position: absolute;
       top: calc(100% + 6px);
       left: 0;
@@ -95,7 +95,7 @@
       padding: 0;
     }
 
-    &.inline-picker .kendo-datepicker-dialog:not([hidden]) .dp-popup {
+    &.inline-picker .dp-picker-dialog:not([hidden]) .dp-popup {
       position: relative;
       left: auto;
       transform: none;
@@ -106,7 +106,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      &.inline-picker .kendo-datepicker-dialog:not([hidden]) .dp-popup {
+      &.inline-picker .dp-picker-dialog:not([hidden]) .dp-popup {
         animation: none;
       }
     }
@@ -120,7 +120,7 @@
    Angular's global-style bundling order — a real conflict this project used
    to have (one file said 252px fixed, this one said 100% + 42px), silently
    arbitrated by build order rather than by design intent. */
-.dp-material {
+.dp-default {
   .dp-popup {
     border-radius: 8px !important;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;

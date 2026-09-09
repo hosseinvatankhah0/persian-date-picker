@@ -15,14 +15,6 @@
 
   <div class="dp-nav-btns-container">
     <div class="dp-calendar-nav-container-left">
-      @if (showLeftSecondaryNav()) {
-        <button (click)="leftSecondaryNavClicked()"
-                [attr.aria-label]="labels().prevYears"
-                [disabled]="leftSecondaryNavDisabled()"
-                class="dp-calendar-secondary-nav-left"
-                type="button">
-        </button>
-      }
       <button (click)="leftNavClicked()"
               [attr.aria-label]="labels().prev"
               [attr.data-hidden]="!showLeftNav()"
@@ -48,14 +40,6 @@
               class="dp-calendar-nav-right"
               type="button">
       </button>
-      @if (showRightSecondaryNav()) {
-        <button (click)="rightSecondaryNavClicked()"
-                [attr.aria-label]="labels().nextYears"
-                [disabled]="rightSecondaryNavDisabled()"
-                class="dp-calendar-secondary-nav-right"
-                type="button">
-        </button>
-      }
     </div>
   </div>
 </div>

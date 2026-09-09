@@ -15,8 +15,6 @@ export interface IConfig {
   monthBtnFormat?: string;
   monthBtnFormatter?: (day: Moment) => string;
   monthBtnCssClassCallback?: (day: Moment) => string;
-  multipleYearsNavigateBy?: number;
-  showMultipleYearsNavigation?: boolean;
   locale?: string;
   returnedValueType?: ECalendarValue;
   showGoToCurrent?: boolean;

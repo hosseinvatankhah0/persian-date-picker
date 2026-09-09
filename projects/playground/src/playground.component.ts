@@ -71,7 +71,9 @@ interface IDemo {
         <p class="pg-hint">
           Nav bar direction is now explicit per-instance instead of inherited
           from the host page — this stays LTR even if a host global stylesheet
-          sets <code>direction</code> on plain <code>div</code>s.
+          sets <code>direction</code> on plain <code>div</code>s. Also check
+          the month grid: no more "jump 10 years" double-arrow next to the
+          single-arrow nav — that feature is gone.
         </p>
         <app-persian-date-picker
           [formControl]="ltrDemo"
@@ -80,6 +82,25 @@ interface IDemo {
           placeholder="Pick a month">
         </app-persian-date-picker>
         <pre class="pg-value">{{ format(ltrDemo.value) }}</pre>
+      </article>
+
+      <article class="pg-card">
+        <h2>مقدار میلادی از سرور، locale فارسی</h2>
+        <p class="pg-hint">
+          دکمه را بزنید تا مقدار فرم مثل یک پاسخ سرور به‌صورت میلادی ست شود
+          (<code>2026-09-09</code>) — پیکر با locale="fa" است، پس باید همان لحظه
+          به‌صورت شمسی نمایش داده شود و همان‌طور هم خروجی بدهد.
+        </p>
+        <button type="button" class="pg-btn" (click)="loadFromServer()">
+          شبیه‌سازی پاسخ سرور (میلادی)
+        </button>
+        <app-persian-date-picker
+          [formControl]="serverDemo"
+          mode="day"
+          locale="fa"
+          placeholder="تاریخ">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(serverDemo.value) }}</pre>
       </article>
     </section>
 
@@ -132,9 +153,14 @@ export class PlaygroundComponent {
   readonly inlineRange = new FormControl<string[] | null>(null);
   readonly iconDemo = new FormControl('');
   readonly ltrDemo = new FormControl('');
+  readonly serverDemo = new FormControl('');
 
   constructor() {
     this.dayRange.valueChanges.subscribe(() => this.rangeChanges.update(n => n + 1));
+  }
+
+  loadFromServer(): void {
+    this.serverDemo.setValue('2026-09-09');
   }
 
   format(value: unknown): string {

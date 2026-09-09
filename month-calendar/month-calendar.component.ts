@@ -77,8 +77,6 @@ export class MonthCalendarComponent implements OnInit, OnChanges, ControlValueAc
   onGoToCurrent = output<void>();
   onLeftNav = output<INavEvent>();
   onRightNav = output<INavEvent>();
-  onLeftSecondaryNav = output<INavEvent>();
-  onRightSecondaryNav = output<INavEvent>();
 
   isInited = signal(false);
   selected = signal<Moment[]>([]);
@@ -102,8 +100,6 @@ export class MonthCalendarComponent implements OnInit, OnChanges, ControlValueAc
   navLabel = computed(() => this.monthCalendarService.getHeaderLabel(this.componentConfig(), this.currentDateView()));
   showLeftNav = computed(() => this.monthCalendarService.shouldShowLeft(this.componentConfig().min, this.currentDateView()));
   showRightNav = computed(() => this.monthCalendarService.shouldShowRight(this.componentConfig().max, this.currentDateView()));
-  showSecondaryLeftNav = computed(() => (!!this.componentConfig().showMultipleYearsNavigation && this.showLeftNav()));
-  showSecondaryRightNav = computed(() => (!!this.componentConfig().showMultipleYearsNavigation && this.showRightNav()));
   shouldShowCurrent = computed(() => this.utilsService.shouldShowCurrent(
     this.componentConfig().showGoToCurrent,
     'month',
@@ -249,39 +245,11 @@ export class MonthCalendarComponent implements OnInit, OnChanges, ControlValueAc
     this.onLeftNav.emit({from, to});
   }
 
-  onLeftSecondaryNavClick() {
-    const config = this.componentConfig();
-    let navigateBy = config.multipleYearsNavigateBy || 1;
-    const min = config.min;
-    if (min && this.currentDateView().year() - min.year() < navigateBy) {
-      navigateBy = this.currentDateView().year() - min.year();
-    }
-
-    const from = this.currentDateView().clone();
-    this.currentDateView.set(this.currentDateView().clone().subtract(navigateBy, 'year'));
-    const to = this.currentDateView().clone();
-    this.onLeftSecondaryNav.emit({from, to});
-  }
-
   onRightNavClick() {
     const from = this.currentDateView().clone();
     this.currentDateView.set(this.currentDateView().clone().startOf('month').add(this.showYearSelector() ? 21 : 1, 'year'));
     const to = this.currentDateView().clone();
     this.onRightNav.emit({from, to});
-  }
-
-  onRightSecondaryNavClick() {
-    const config = this.componentConfig();
-    let navigateBy = config.multipleYearsNavigateBy || 1;
-    const max = config.max;
-    if (max && max.year() - this.currentDateView().year() < navigateBy) {
-      navigateBy = max.year() - this.currentDateView().year();
-    }
-
-    const from = this.currentDateView().clone();
-    this.currentDateView.set(this.currentDateView().clone().add(navigateBy, 'year'));
-    const to = this.currentDateView().clone();
-    this.onRightSecondaryNav.emit({from, to});
   }
 
   toggleCalendarMode() {
