@@ -4,8 +4,17 @@
 
 body {
   margin: 0;
-  padding: 32px 24px 64px;
-  background: #f5f6f8;
-  color: #202124;
-  font: 14px/1.6 'Segoe UI', Tahoma, system-ui, sans-serif;
+  background: #f7f8f3;
+  color: #243d36;
+  font: 14px/1.9 Tahoma, 'Segoe UI', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+button, input { font-family: inherit; }
+button, a, summary { -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+::selection { background: #d6e9d9; color: #163e34; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }

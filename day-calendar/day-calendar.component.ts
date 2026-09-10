@@ -6,8 +6,10 @@ import {
   ChangeDetectorRef,
   Component,
   computed,
+  ElementRef,
   forwardRef,
   HostBinding,
+  inject,
   input,
   OnChanges,
   OnInit,
@@ -92,6 +94,10 @@ export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAcce
   selected = signal<Moment[]>([]);
   currentDateView = signal<Moment>(moment());
   hoveredDate = signal<Moment | null>(null);
+  /** Where the arrow keys have moved to, once the user starts using them. */
+  focusedDate = signal<Moment | null>(null);
+
+  private readonly elementRef = inject(ElementRef);
 
   // Computed values
   componentConfig = computed(() => this.dayCalendarService.getConfig({
@@ -108,6 +114,27 @@ export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAcce
   });
 
   weeks = computed(() => this.dayCalendarService.generateMonthArray(this.componentConfig(), this.currentDateView(), this.selected()));
+
+  /**
+   * The single day button that Tab can reach. A calendar that leaves all 42
+   * buttons in the tab order makes a keyboard user press Tab dozens of times
+   * to get past it; the ARIA grid pattern is one stop for the whole grid,
+   * with the arrow keys moving within it. The anchor falls back through
+   * selection, then today, then the first day of the month on show, so Tab
+   * always lands somewhere meaningful.
+   */
+  tabbableDate = computed<Moment | null>(() => {
+    const days = this.weeks().flat().filter(day => !day.disabled);
+    const focused = this.focusedDate();
+
+    const anchor = (focused && days.find(day => day.date.isSame(focused, 'day')))
+      || days.find(day => day.selected)
+      || days.find(day => day.currentDay && day.currentMonth)
+      || days.find(day => day.currentMonth)
+      || days[0];
+
+    return anchor ? anchor.date : null;
+  });
   weekdays = computed(() => this.dayCalendarService.generateWeekdays(this.componentConfig().firstDayOfWeek || 'sa', this.componentConfig().locale || 'fa'));
 
   navLabel = computed(() => this.dayCalendarService.getHeaderLabel(this.componentConfig(), this.currentDateView()));
@@ -175,12 +202,12 @@ export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAcce
 
   }
 
-  writeValue(value: CalendarValue): void {
-    if (value === this.inputValue || (this.inputValue && moment.isMoment(this.inputValue) && (this.inputValue as Moment).isSame(<MomentInput>value))) {
-      return;
-    }
-
-    this.inputValue = value;
+  /** `null` is in the signature because a form reset really does hand one
+   * over — the branch below already relied on it. */
+  writeValue(value: CalendarValue | null): void {
+    // A click changes selected(), not inputValue. Always apply model writes:
+    // resetting to the original null must also clear a user's selection.
+    this.inputValue = value ?? '';
     const config = this.componentConfig();
 
     if (value) {
@@ -236,6 +263,101 @@ export class DayCalendarComponent implements OnInit, OnChanges, ControlValueAcce
     this.selected.set(nextSelected);
     this.onChangeCallback(this.processOnChangeCallback(nextSelected));
     this.onSelect.emit(day);
+  }
+
+  isTabbable(day: IDay): boolean {
+    const anchor = this.tabbableDate();
+    return !!anchor && day.date.isSame(anchor, 'day');
+  }
+
+  /**
+   * Arrow keys move by a day, Up/Down by a week, PageUp/PageDown by a month
+   * and Home/End to the ends of the week — the keyboard contract every
+   * calendar widget is expected to honour. Selection stays on Enter/Space,
+   * which the day buttons already handle natively.
+   */
+  onDayKeydown(event: KeyboardEvent, day: IDay) {
+    const target = event.key === 'Home' || event.key === 'End'
+      ? this.weekEdgeDate(day, event.key)
+      : this.steppedDate(day, event.key);
+
+    if (!target) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (!target.isSame(this.currentDateView(), 'month')) {
+      this.currentDateView.set(target.clone());
+    }
+    this.focusedDate.set(target);
+    this.focusDayAfterRender(target);
+  }
+
+  private steppedDate(day: IDay, key: string): Moment | null {
+    /* The grid runs right-to-left in Farsi, so the arrow that visually moves
+       forward through the month is the left one. */
+    const forward = this.isFarsi() ? 'ArrowLeft' : 'ArrowRight';
+    const back = this.isFarsi() ? 'ArrowRight' : 'ArrowLeft';
+
+    const steps: { [key: string]: [number, unitOfTime.Base] } = {
+      [forward]: [1, 'day'],
+      [back]: [-1, 'day'],
+      ArrowDown: [7, 'day'],
+      ArrowUp: [-7, 'day'],
+      PageDown: [1, 'month'],
+      PageUp: [-1, 'month']
+    };
+
+    const step = steps[key];
+    if (!step) {
+      return null;
+    }
+
+    /* Which calendar a "month" belongs to is decided by the moment's own
+       locale, so paging has to run on one set to the calendar being shown —
+       otherwise PageDown adds a Gregorian month to a Jalali view and lands a
+       day or two off. */
+    const from = day.date.clone().locale(this.componentConfig().locale || 'fa');
+    return this.firstEnabledFrom(from.add(step[0], step[1]), step[0]);
+  }
+
+  private weekEdgeDate(day: IDay, key: string): Moment | null {
+    const row = this.weeks().find(week => week.some(d => d.date.isSame(day.date, 'day')));
+    if (!row) {
+      return null;
+    }
+
+    const ordered = key === 'Home' ? row : [...row].reverse();
+    const edge = ordered.find(d => !d.disabled);
+    return edge && !edge.date.isSame(day.date, 'day') ? edge.date.clone() : null;
+  }
+
+  /**
+   * Steps over disabled dates instead of stopping on one: a host that
+   * disables every Friday would otherwise strand the cursor there, since a
+   * disabled button cannot take focus.
+   */
+  private firstEnabledFrom(candidate: Moment, direction: number): Moment | null {
+    const config = this.componentConfig();
+    const stride = direction > 0 ? 1 : -1;
+    let date = candidate;
+
+    for (let i = 0; i < 62 && this.dayCalendarService.isDateDisabled(date, config); i++) {
+      date = date.add(stride, 'day');
+    }
+
+    return this.dayCalendarService.isDateDisabled(date, config) ? null : date;
+  }
+
+  /** After a month change the grid is re-rendered, so the button for the new
+   * date only exists once Angular has flushed the view. */
+  private focusDayAfterRender(date: Moment) {
+    const attr = date.format(this.componentConfig().format);
+    setTimeout(() => {
+      const host = this.elementRef.nativeElement as HTMLElement;
+      host.querySelector<HTMLButtonElement>(`button.dp-calendar-day[data-date="${attr}"]`)?.focus();
+    });
   }
 
   dayHovered(day: IDay) {

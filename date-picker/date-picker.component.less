@@ -1,18 +1,41 @@
 @import '../common/styles/variables';
 
+dp-date-picker-modal .dp-dialog-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px 6px 16px;
+  border-bottom: 1px solid @c-divider;
+  font-size: 13px;
+  font-weight: 600;
+  color: @c-text;
+  button {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: transparent;
+    border-radius: @radius-sm;
+    font-size: 22px;
+    color: @c-text-muted;
+    cursor: pointer;
+    &:hover { background: @c-hover; }
+    &:focus-visible { outline: 2px solid @c-primary-solid; outline-offset: -2px; }
+  }
+}
+
 /* The range summary (when present) sits on its own line above the buttons,
    because the buttons need the full row width to split evenly 50/50 — they
    can't do that while sharing a row with a text label. */
 dp-date-picker-modal .dp-picker-actions {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px 10px;
+  gap: 10px;
+  padding: 12px 16px;
   border-top: 1px solid @border-card-color;
 
   .dp-range-summary {
     padding: 0 2px;
-    font-size: 11px;
+    font-size: 12px;
     color: @icon-color;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -37,7 +60,7 @@ dp-date-picker-modal .dp-picker-actions {
     font-size: 12.5px;
     font-weight: 500;
     cursor: pointer;
-    min-height: 28px;
+    min-height: 44px;
     padding: 0 10px;
     border-radius: @radius-sm;
     transition: background @transition-fast, opacity @transition-fast;
@@ -83,14 +106,20 @@ dp-date-picker-modal .dp-picker-actions {
       .dp-picker-input {
         box-sizing: border-box;
         width: 100%;
-        height: 38px;
+        height: 48px;
         padding: 8px 12px;
         border: 1px solid @border-card-color;
         border-radius: @radius-sm;
         font-size: 13px;
+        font-family: inherit;
+        color: @c-text;
         outline: none;
         background: @c-white;
         transition: border-color @transition-fast, box-shadow @transition-fast;
+
+        &::placeholder { color: @c-text-muted; opacity: 1; }
+        &:hover:not(:disabled) { border-color: darken(@border-card-color, 15%); }
+        &:disabled { background: @c-surface-muted; cursor: not-allowed; }
 
         &:focus {
           border-color: @c-primary-solid;
@@ -203,7 +232,8 @@ dp-date-picker-modal:not(.inline-picker) {
     bottom: 0;
     left: 0;
     z-index: 100000;
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(22, 43, 38, 0.38);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -232,7 +262,7 @@ dp-date-picker-modal:not(.inline-picker) {
        rounded (overflow still clips them) while letting wide content, like
        the time panel, scroll instead of getting cut off. */
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: auto;
   }
 
   @media (max-width: 420px) {

@@ -18,7 +18,12 @@ export interface DateLimits {
   maxTime?: SingleCalendarValue;
 }
 
-@Injectable()
+/* Root-provided because the calendar components are standalone and exported:
+   used on their own (a bare <dp-day-calendar>, say, rather than inside
+   <dp-date-picker-modal>, which is the only place that listed this in its
+   providers) they would otherwise fail to construct at all. The service
+   holds no state, so one shared instance is the right shape for it. */
+@Injectable({providedIn: 'root'})
 export class UtilsService {
   static debounce(func: Function, wait: number) {
     let timeout: any;

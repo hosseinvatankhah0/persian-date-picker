@@ -90,8 +90,8 @@ describe('Service: ObUtilsService', () => {
   }));
 
   it('should check if date is in range', inject([UtilsService], (service: UtilsService) => {
-    expect(service.isDateInRange(moment(), null, null)).toBeTruthy();
-    expect(service.isDateInRange(moment(), moment().subtract(1, 'd'), null)).toBeTruthy();
+    expect(service.isDateInRange(moment(), undefined, undefined)).toBeTruthy();
+    expect(service.isDateInRange(moment(), moment().subtract(1, 'd'), undefined)).toBeTruthy();
     expect(service.isDateInRange(
       moment().subtract(2, 'd'),
       moment().subtract(1, 'd'),
@@ -122,7 +122,7 @@ describe('Service: ObUtilsService', () => {
 
   it('check convertToString', inject([UtilsService], (service: UtilsService) => {
     const format = 'MM/DD/YYYY';
-    expect(service.convertToString(null, format)).toEqual('');
+    expect(service.convertToString(undefined as any, format)).toEqual('');
     expect(service.convertToString('', format)).toEqual('');
     expect(service.convertToString(moment(), format)).toEqual(moment().format(format));
     expect(service.convertToString([moment()], format)).toEqual(moment().format(format));

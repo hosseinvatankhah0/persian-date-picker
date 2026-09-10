@@ -142,8 +142,12 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   private committedSelection: Moment[] = [];
   /** Element focused before the dialog opened, so closing can hand focus back. */
   private lastFocusedElement: HTMLElement | null = null;
+  /* `:not([tabindex="-1"])` on every branch, not just the last: the day grid
+     uses a roving tabindex, so most of its buttons are deliberately out of
+     the tab order. Counting them here would put the trap's "last" element on
+     a button Tab never reaches, and focus would escape the dialog. */
   private static readonly FOCUSABLE_SELECTOR =
-    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    'button:not([disabled]):not([tabindex="-1"]), [href]:not([tabindex="-1"]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])';
 
   // Computeds
   componentConfig = computed(() => this.dayPickerService.getConfig({

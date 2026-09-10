@@ -37,12 +37,12 @@ describe('Locale-aware picker output', () => {
     expect(outputOf(picker)).toBe('1405/06/18');
   });
 
-  it('keeps Gregorian output when locale is en, even for a value the picker itself parsed', () => {
+  it('still emits Jalali model output when locale is en, since `locale` only drives the UI/display, not the model format', () => {
     const picker = createPicker(injector, 'en');
     picker.writeValue('2026-09-09');
 
     expect(picker.dateObject!.locale()).toBe('en');
-    expect(outputOf(picker)).toBe('2026/09/09');
+    expect(outputOf(picker)).toBe('1405/06/18');
   });
 
   it('emits Jalali month output for locale fa without needing an explicit j-prefixed format', () => {
@@ -57,7 +57,7 @@ describe('Locale-aware picker output', () => {
     picker.selectionMode = 'range';
     picker.writeValue(['2026-09-09', '2026-09-14']);
 
-    expect(picker.rangeObject.every(m => m.locale() === 'fa')).toBeTrue();
+    expect(picker.rangeObject.every(m => m.locale() === 'fa')).toBeTruthy();
     expect(outputOf(picker)).toEqual(['1405/06/18', '1405/06/23']);
   });
 

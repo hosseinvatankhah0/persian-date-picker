@@ -62,6 +62,10 @@ Inline calendars remain visible without an input or a backdrop.
   `aria-pressed` for the selected state.
 - Navigation buttons (previous/next/today) are labeled in the active locale rather than a
   hardcoded language.
+- The day grid is one Tab stop, not 42: arrow keys move by a day (following the
+  right-to-left grid in `fa`), Up/Down by a week, PageUp/PageDown by a month, and
+  Home/End to the ends of the week. Paging past the edge of the month brings the
+  view along, and disabled dates are stepped over rather than blocking the cursor.
 - Animations are skipped for users with `prefers-reduced-motion` set.
 - Day cells, month chips, and the time steppers grow to ~44px under
   `(pointer: coarse)` so touch targets meet WCAG 2.5.5 without changing the visual size
@@ -125,7 +129,9 @@ export class ExampleComponent {
 |---|---|---|---|
 | `mode` | `'day' \| 'month' \| 'time' \| 'daytime'` | `'day'` | The selection mode of the picker. |
 | `pickerType` | `'modal' \| 'inline'` | `'modal'` | Display style: input with modal overlay or inline component. |
-| `locale` | `'fa' \| 'en'` | `'fa'` | Locale used for formatting dates. |
+| `locale` | `'fa' \| 'en'` | `'fa'` | Locale of the calendar UI and of the default `display-format`. |
+| `format` | `string` | Jalali, from `mode` | Format of the **model** value (`ngModel` / form control). See [Value formats](#value-formats). |
+| `display-format` | `string` | from `mode` + `locale` | Format shown in the **text box**. Independent of `format`. |
 | `placeholder` | `string` | `'تاریخ'` | Input placeholder text. |
 | `minDate` | `Moment \| string` | 100 years ago | Minimum selectable date. |
 | `maxDate` | `Moment \| string` | +20 years | Maximum selectable date. |
@@ -145,6 +151,49 @@ export class ExampleComponent {
 
 In range mode the form control value is a `string[]` of two formatted dates
 (empty array when cleared).
+
+## Value formats
+
+Two separate formats: `format` is what the model holds, `display-format` is what
+the user reads in the box.
+
+```html
+<app-persian-date-picker
+  [formControl]="control"
+  format="jYYYY-jMM-jDD"
+  display-format="jYYYY/jMM/jDD">
+</app-persian-date-picker>
+```
+
+### Gregorian input is detected automatically
+
+Leave `format` unset and a Gregorian value bound in from a server is recognised
+and converted — the model ends up holding the Jalali string, not just the box.
+All of these produce `1405/03/22`:
+
+```ts
+control.setValue('2026/06/12');
+control.setValue('2026-06-12');
+control.setValue('2026-06-12T00:00:00.000Z');  // ISO 8601
+control.setValue('2026-06-12T08:30:00');       // .NET DateTime
+```
+
+Which calendar a bare `YYYY-MM-DD` string belongs to is decided by its year: a
+four-digit year above 1500 is Gregorian, anything lower is read as Jalali.
+
+### Setting `format` turns detection off
+
+Declaring a format says you already know the shape, so nothing is guessed and
+the model keeps that format's own calendar:
+
+```html
+<!-- model stays Gregorian: "2026-06-12" -->
+<app-persian-date-picker [formControl]="control" format="YYYY-MM-DD">
+```
+
+A format containing `j`-prefixed tokens (`jYYYY`) is Jalali, one without is
+Gregorian — regardless of `locale`, which only drives the calendar UI. Set
+`display-format` to show the user one calendar while the form holds the other.
 
 ## License
 MIT — see [LICENSE](LICENSE).

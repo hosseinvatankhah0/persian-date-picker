@@ -53,6 +53,12 @@ export const PERSIAN_DATE_PICKER_VALUE_ACCESSOR: any = {
 export class PersianDatePickerComponent implements ControlValueAccessor, OnInit, OnChanges {
   private readonly cdr = inject(ChangeDetectorRef);
 
+  /** Digits and date punctuation only. Anything else never reaches the
+   * parser, which is lenient enough to invent a date out of arbitrary text
+   * — harmless while it only affected the display, but not now that the
+   * parsed value is written back to the host's model. */
+  private static readonly DATE_SHAPE = /^[\d/\-.:\s+TZz]+$/;
+
   dateObject: Moment | null = null;
   /** Populated instead of `dateObject` while `selectionMode === 'range'`. */
   rangeObject: Moment[] = [];
@@ -72,6 +78,23 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
   @Input('form-control') formControl!: AbstractControl;
   @Input() mode: 'day' | 'month' | 'time' | 'daytime' = 'day';
   @Input() locale: 'fa' | 'en' = 'fa';
+  /**
+   * Format used to parse/serialize the value bound through ngModel/form
+   * control (not the text shown in the input box - see `displayFormat`).
+   * Left unset, the model value defaults to Jalali (via an explicit
+   * `j`-prefixed default format) regardless of `locale`, and any Gregorian
+   * string handed in (ISO, `YYYY/MM/DD`, `YYYY-MM-DD`, a .NET-style
+   * datetime) is auto-detected and converted. Setting this explicitly opts
+   * out of that auto-detection entirely: the incoming value is parsed
+   * strictly against this format, and the emitted value keeps this format's
+   * own calendar system (Jalali if it contains `j`-prefixed tokens,
+   * Gregorian otherwise).
+   */
+  @Input() format?: string;
+  /** Format shown/typed in the input's own text box. Left unset, it is
+   * derived from `mode` and interpreted against `locale` (Jalali digits for
+   * `fa`, Gregorian for `en`) - unrelated to the model's own `format`. */
+  @Input('display-format') displayFormat?: string;
   @Input() required = false;
   @Input() placeholder = 'تاریخ';
   @Output() inputModelChange = new EventEmitter<string>();
@@ -136,17 +159,20 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
   }
 
   private formatValue(): string | string[] {
+    const fmt = this.effectiveModelFormat();
+    const calLocale = this.isJalaliFormat(fmt) ? 'fa' : 'en';
+
     if (this.isRange) {
       return this.rangeObject
         .filter(Boolean)
-        .map(m => m.locale(this.locale).format(this.config.format));
+        .map(m => m.clone().locale(calLocale).format(fmt));
     }
 
     if (!this.dateObject || typeof this.dateObject === 'string') {
       return '';
     }
 
-    return this.dateObject.locale(this.locale).format(this.config.format);
+    return this.dateObject.clone().locale(calLocale).format(fmt);
   }
 
   writeValue(obj: any): void {
@@ -166,7 +192,49 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
       this.dateObject = this.normalizeToMoment(obj);
     }
 
+    this.normalizeModelValue(obj);
     this.cdr.markForCheck();
+  }
+
+  /**
+   * Writing a foreign-calendar value in is only half of what a host asking
+   * for auto-detection wants: the server handed us a Gregorian string, and
+   * the model itself - not just the text box - is expected to end up holding
+   * the picker's own format. So the normalized value is written back through
+   * the change callback.
+   *
+   * Deferred to a microtask because writeValue() normally runs inside a
+   * change-detection pass, where emitting synchronously would trip
+   * ExpressionChangedAfterItHasBeenCheckedError. It cannot loop: the
+   * re-entrant writeValue this triggers serializes to the identical string,
+   * which returns early below.
+   */
+  private normalizeModelValue(raw: any): void {
+    if (!this.hasValue) {
+      return;
+    }
+
+    const normalized = this.formatValue();
+    if (this.isSameModelValue(raw, normalized)) {
+      return;
+    }
+
+    queueMicrotask(() => {
+      this.onChange(normalized);
+      this.cdr.markForCheck();
+    });
+  }
+
+  private isSameModelValue(raw: any, normalized: string | string[]): boolean {
+    if (Array.isArray(normalized)) {
+      const rawParts: any[] = Array.isArray(raw)
+        ? raw
+        : (typeof raw === 'string' && raw ? raw.split(this.rangeSeparator) : []);
+      return rawParts.length === normalized.length
+        && rawParts.every((part, i) => part === normalized[i]);
+    }
+
+    return raw === normalized;
   }
 
   /**
@@ -204,8 +272,22 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     }
 
     const value = obj.trim();
-    if (!value) {
+    if (!value || !PersianDatePickerComponent.DATE_SHAPE.test(value)) {
       return null;
+    }
+
+    /* An explicit `format` input opts out of auto-detection entirely: the
+       consumer has told us exactly what shape to expect, so parse strictly
+       against it instead of guessing the calendar system. ISO is allowed
+       alongside a Gregorian format because that is what a server hands back
+       for the same field (a .NET DateTime serializes to it) - the calendar
+       is still the declared one, only the shape is looser. */
+    if (this.format) {
+      if (this.isJalaliFormat(this.format)) {
+        return this.parseJalali(value, this.format);
+      }
+      const m = moment(value, [this.format, moment.ISO_8601], true);
+      return m.isValid() ? m : null;
     }
 
     const isoMatch = /^(\d{4})[-/]\d{2}[-/]\d{2}/.exec(value);
@@ -217,20 +299,68 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     }
 
     const jalaliFormats = [
-      this.config?.format,
+      this.defaultModelFormatByMode(),
       'jYYYY/jMM/jDD',
       'jYYYY-jMM-jDD',
-    ].filter(Boolean);
+      'jYYYY/jM/jD',
+      'jYYYY-jM-jD',
+    ];
 
     for (const fmt of jalaliFormats) {
-      const m = moment.from(value, this.locale, fmt);
-      if (m.isValid()) {
-        return m;
+      const parsed = this.parseJalali(value, fmt);
+      if (parsed) {
+        return parsed;
       }
     }
 
-    const g = moment(value);
-    return g.year() > 1500 ? g : null;
+    const g = moment(value, moment.ISO_8601, true);
+    return g.isValid() && g.year() > 1500 ? g : null;
+  }
+
+  /**
+   * `moment.from` is lenient to the point of uselessness as a validator -
+   * it turns "not a date" into a valid moment in year 621 - so a parse only
+   * counts if formatting it back produces exactly what came in.
+   */
+  private parseJalali(value: string, fmt: string): Moment | null {
+    const parsed = moment.from(value, 'fa', fmt);
+    return parsed.isValid() && parsed.locale('fa').format(fmt) === value ? parsed : null;
+  }
+
+  /** The model's (ngModel/form) own format - independent of `locale`,
+   * which only governs the calendar UI and text-box display. */
+  private effectiveModelFormat(): string {
+    return this.format || this.defaultModelFormatByMode();
+  }
+
+  private isJalaliFormat(fmt: string): boolean {
+    return /j[YMD]/.test(fmt);
+  }
+
+  private defaultModelFormatByMode(): string {
+    switch (this.mode) {
+      case 'daytime':
+        return 'jYYYY/jMM/jDD HH:mm:ss';
+      case 'month':
+        return 'jYYYY/jMM';
+      case 'time':
+        return 'HH:mm:ss';
+      default:
+        return 'jYYYY/jMM/jDD';
+    }
+  }
+
+  private defaultDisplayFormatByMode(): string {
+    switch (this.mode) {
+      case 'daytime':
+        return 'YYYY/MM/DD HH:mm:ss';
+      case 'month':
+        return 'YYYY/MM';
+      case 'time':
+        return 'HH:mm:ss';
+      default:
+        return 'YYYY/MM/DD';
+    }
   }
 
   registerOnChange(fn: any): void {
@@ -267,25 +397,11 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
   }
 
   configure(): void {
-    let format = 'YYYY/MM/DD';
-    switch (this.mode) {
-      case 'day':
-        format = 'YYYY/MM/DD';
-        break;
-      case 'daytime':
-        format = 'YYYY/MM/DD HH:mm:ss';
-        break;
-      case 'month':
-        /* Uppercase tokens, same as every other mode: jalali-moment reads
-           these against whichever calendar `.locale()` is set to, so one
-           format string covers both locales instead of special-casing 'fa'
-           with an explicit j-prefix that meant the exact same thing here. */
-        format = 'YYYY/MM';
-        break;
-      case 'time':
-        format = 'HH:mm:ss';
-        break;
-    }
+    /* This is the text box's own display format, interpreted against
+       `locale` (Jalali digits for 'fa', Gregorian for 'en') - it is
+       unrelated to `format`, which governs the ngModel/form value's own
+       calendar system independently of `locale`. */
+    const format = this.displayFormat || this.defaultDisplayFormatByMode();
 
     this.config = {
       locale: this.locale,

@@ -40,6 +40,8 @@
               <button (click)="dayClicked(day)"
                       (mouseenter)="dayHovered(day)"
                       (focus)="dayHovered(day)"
+                      (keydown)="onDayKeydown($event, day)"
+                      [tabIndex]="isTabbable(day) ? 0 : -1"
                       [attr.data-date]="day.date.format(componentConfig().format)"
                       [attr.aria-current]="day.currentDay ? 'date' : null"
                       [attr.aria-label]="getDayAriaLabel(day)"

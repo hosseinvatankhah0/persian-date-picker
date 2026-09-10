@@ -4,7 +4,8 @@
   dp-month-calendar {
     display: inline-block;
     position: relative;
-    width: 284px;
+    width: 312px;
+    max-width: calc(100vw - 34px);
 
     .dp-month-calendar-container {
       background: @c-white;
@@ -214,6 +215,7 @@
       .dp-month-cell {
         height: 48px;
       }
+      &.dp-default .dp-calendar-month, .dp-year-btn { min-height: 44px; }
     }
   }
 }

@@ -12,6 +12,9 @@
         [placeholder]="placeholder()"
         [readonly]="componentConfig().disableKeypress"
         [attr.required]="required() ? '' : null"
+        [attr.dir]="componentConfig().locale === 'fa' ? 'rtl' : 'ltr'"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="isModalOpen()"
         class="dp-picker-input"
         [id]="inputId"
         type="text"/>
@@ -63,6 +66,12 @@
       <div
           [ngSwitch]="mode()"
           class="dp-popup {{theme()}}">
+        @if (!componentConfig().hideInputContainer) {
+          <div class="dp-dialog-heading" [attr.dir]="componentConfig().locale === 'fa' ? 'rtl' : 'ltr'">
+            <span>{{ dialogLabel() }}</span>
+            <button type="button" (click)="closeModal()" [attr.aria-label]="componentConfig().locale === 'fa' ? 'بستن تقویم' : 'Close calendar'">×</button>
+          </div>
+        }
         <dp-day-calendar #dayCalendar
                          class="visible"
                          (onGoToCurrent)="onGoToCurrent.emit()"
@@ -124,7 +133,7 @@
             }
             <div class="dp-actions-row">
               <button type="button" class="dp-btn dp-btn-close" (click)="closeModal()">
-                {{ componentConfig().locale === 'fa' ? 'بستن' : 'Cancel' }}
+                {{ componentConfig().locale === 'fa' ? 'انصراف' : 'Cancel' }}
               </button>
               <button type="button" class="dp-btn dp-btn-confirm" [disabled]="!canConfirm" (click)="confirmModal()">
                 {{ componentConfig().locale === 'fa' ? 'تایید' : 'Confirm' }}

@@ -1,17 +1,17 @@
 @c-black: #000000;
 @c-white: #FFFFFF;
-@demo-primary: #106CC8;
-@c-primary: rgba(16, 108, 200, 0.50); // #106CC8;
-@c-primary-solid: #106CC8;
+@demo-primary: #147568;
+@c-primary: #147568;
+@c-primary-solid: #147568;
 @c-light-gray: #E0E0E0;
 
 // Neutral ramp shared by every panel so the calendar, time panel and action
 // bar read as one surface.
-@c-text: #202124;
-@c-text-muted: #5f6368;
-@c-surface-muted: #f8f9fa;
-@c-hover: #f1f3f4;
-@c-divider: #ececf0;
+@c-text: #223c38;
+@c-text-muted: #647570;
+@c-surface-muted: #f6f8f6;
+@c-hover: #edf3ef;
+@c-divider: #dfe7e2;
 
 // Semantic aliases, named after their role rather than their raw value, so a
 // selector's intent reads at a glance (an icon color vs. a border color vs. a
@@ -28,15 +28,15 @@
 @c-range-band-preview: fade(@c-primary-solid, 7%);
 @c-accent-hover: fade(@c-primary-solid, 10%);
 
-@cell-size: 36px;
+@cell-size: 40px;
 // Kept small and close together on purpose: a calendar is a grid of many
 // small controls, and a large radius on each one reads as "bubbly" rather
 // than crisp. @radius-md is a shade bigger than @radius-sm/@radius-lg only
 // because it sits on wider content (the month chip, the time digit box) that
 // needs a touch more room to still look intentional rather than clipped.
-@radius-sm: 4px;
-@radius-md: 6px;
-@radius-lg: 6px;
+@radius-sm: 8px;
+@radius-md: 10px;
+@radius-lg: 12px;
 
 // Cap on the outer ends of a range band. Kept in px, not %, because a
 // percentage radius takes its horizontal half from the cell width and its

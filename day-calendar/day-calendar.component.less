@@ -73,8 +73,14 @@
       border-radius: 50%;
     }
 
-    .dp-prev-month, .dp-next-month {
-      opacity: 0.35;
+    /* Dimmed on the button alone. The same class map is stamped on both the
+       cell and the button it wraps, so a rule matching both multiplied the
+       two opacities together (0.35 × 0.35 ≈ 0.12) and left these barely
+       visible. Applied once, 0.55 still reads as "not this month" while
+       clearing the 4.5:1 WCAG asks of text — and these are clickable. */
+    button.dp-calendar-day.dp-prev-month,
+    button.dp-calendar-day.dp-next-month {
+      opacity: 0.55;
     }
 
     .dp-hide-near-month {
@@ -94,11 +100,12 @@
         height: @cell-size;
         width: @cell-size;
         line-height: @cell-size;
+        /* @c-text-muted is already the muted step; the extra 0.7 on top of it
+           pushed the weekday row to ~2.9:1, below the WCAG 4.5:1 floor. */
         color: @c-text-muted;
         border: none;
         font-size: 12px;
         font-weight: 500;
-        opacity: 0.7;
       }
 
       .dp-calendar-weekday:last-child {
@@ -155,7 +162,7 @@
         border-radius: 50%;
         border: 1px dashed @border-selected-color;
         box-shadow: 0 0 0 3px fade(@c-primary-solid, 8%);
-        line-height: 34px;
+        line-height: @cell-size - 2px;
       }
 
       .dp-calendar-day:focus-visible {
@@ -167,8 +174,20 @@
     /* Bump the tap target on touch devices without changing the visual chip
        size — WCAG 2.5.5 / Material guidance both want ~44px on touch. */
     @media (pointer: coarse) {
-      .dp-day-cell {
+      .dp-day-cell, .dp-calendar-day, .dp-calendar-weekday {
+        width: 44px;
         height: 44px;
+      }
+      &.dp-default .dp-calendar-wrapper { padding-inline: 6px; }
+      &.dp-default .dp-calendar-day { width: 44px; height: 44px; line-height: 44px; }
+    }
+
+    @media (max-width: 350px) {
+      width: calc(100vw - 34px);
+      &.dp-default .dp-calendar-wrapper { padding-inline: 0; }
+      .dp-day-cell, .dp-calendar-weekday,
+      &.dp-default .dp-calendar-weekday, &.dp-default .dp-calendar-day {
+        width: 100%;
       }
     }
 
