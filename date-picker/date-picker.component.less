@@ -23,29 +23,68 @@ dp-date-picker-modal .dp-dialog-heading {
   }
 }
 
-/* The range summary (when present) sits on its own line above the buttons,
-   because the buttons need the full row width to split evenly 50/50 — they
-   can't do that while sharing a row with a text label. */
+/* Sits above the grid so the two endpoints and the instruction stay in view
+   while the user picks — a range takes two clicks, and the second one is the
+   easy one to get wrong without seeing what the first one set. */
+dp-date-picker-modal .dp-range-progress {
+  padding: 10px 16px 12px;
+  border-bottom: 1px solid @c-divider;
+
+  .dp-range-hint {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: @c-text-muted;
+  }
+
+  .dp-range-endpoints {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .dp-range-endpoint {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: 6px 10px;
+    border: 1px solid @c-divider;
+    border-radius: @radius-sm;
+    background: @c-surface-muted;
+    transition: border-color @transition-fast, background @transition-fast;
+
+    span {
+      font-size: 11px;
+      color: @c-text-muted;
+    }
+
+    strong {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: @c-text;
+      font-variant-numeric: tabular-nums;
+      /* The formatted date is a single unbreakable phrase, so it has to be
+         allowed to clip rather than push the two-column grid apart. */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  /* Marks the end the next click will fill. The border carries it rather than
+     a heavy fill, so both endpoints keep equal weight when read side by side. */
+  .dp-range-active {
+    border-color: @c-primary-solid;
+    background: @c-accent-hover;
+  }
+}
+
 dp-date-picker-modal .dp-picker-actions {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 12px 16px;
   border-top: 1px solid @border-card-color;
-
-  .dp-range-summary {
-    padding: 0 2px;
-    font-size: 12px;
-    color: @icon-color;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    /* Kept as a safety net, not a layout default: an unusually long locale's
-       formatted range string could still overflow the popup on a narrow
-       screen without it. */
-    max-width: 100%;
-  }
 
   .dp-actions-row {
     display: grid;

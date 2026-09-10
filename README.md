@@ -19,6 +19,12 @@ Click the calendar heading to switch from days to months, then click the year
 heading to browse a 21-year page. Select a year, then a month to return to days.
 Month buttons use a three-column layout; months and years outside `minDate` and
 `maxDate` are disabled. Persian and English calendars use their own month boundaries.
+In `fa` the heading's numerals are rendered as Persian digits.
+
+Composing `CalendarNavComponent` directly? Its `labelAction`, `previousLabel`,
+`nextLabel` and `currentLabel` inputs replace the built-in wording of the heading
+button and the prev/next/today controls; left unset, each falls back to the
+active locale's default.
 
 ## Selecting a range
 
@@ -37,6 +43,12 @@ and is read-only, since free-text editing of a joined range is ambiguous.
 `selectionMode` works in `day` and `month` modes; `daytime` always selects a single
 moment.
 
+Above the grid the picker shows which end it is waiting for: a one-line
+instruction plus the two endpoints, with the one the next click will fill
+outlined. It is announced to screen readers via `aria-live`, so the step is not
+carried by the outline alone. Nothing is written to the form until both ends
+exist — a half-picked range never reaches the host.
+
 ## Confirming a selection
 
 There is one action row, and only where it earns its place:
@@ -48,7 +60,7 @@ There is one action row, and only where it earns its place:
 | `time`, `daytime` | shown | on **تایید / Confirm** |
 
 Modes that build a value over several interactions keep it *pending*: the host sees
-no half-finished values, and **بستن / Cancel** restores the last confirmed value.
+no half-finished values, and **انصراف / Cancel** restores the last confirmed value.
 Set `showActionButtons` on the component (or in `config`) to override this.
 
 Inline calendars remain visible without an input or a backdrop.
@@ -57,6 +69,10 @@ Inline calendars remain visible without an input or a backdrop.
 
 - The modal exposes `role="dialog"` / `aria-modal="true"`, traps Tab focus while open,
   and returns focus to the triggering element on close.
+- The input opens the calendar on `ArrowDown` or `Enter` and closes it on `Escape`,
+  so the picker is reachable without a mouse. Focus alone does not open it while the
+  field is typeable — otherwise the dialog would steal the caret from anyone typing
+  a date by hand.
 - Day and month buttons carry a full localized `aria-label` (weekday, day, month, year),
   not just the short number shown on the chip, plus `aria-current="date"` for today and
   `aria-pressed` for the selected state.
@@ -84,7 +100,8 @@ npm install persian-date-picker-angular jalali-moment
 | Script | Purpose |
 |---|---|
 | `npm start` | Serves the playground app (`projects/playground`), which exercises every mode side by side. |
-| `npm test` | Runs the calendar and range regression suite. |
+| `ng test persian-date-picker` | Runs the unit suite (Vitest). The format, keyboard-navigation and range regression specs pass; several specs predating the Vitest builder still fail on Karma/Jasmine-only APIs. |
+| `npm test` | Runs the standalone month-navigation script only (`scripts/test-navigation.cjs`), not the unit suite. |
 | `npm run build:lib` | Builds the publishable package into `dist/persian-date-picker`. |
 | `npm run build:playground` | Production-builds the playground app. |
 | `npm run publish:lib` | Builds the library and publishes `dist/persian-date-picker` to npm. |

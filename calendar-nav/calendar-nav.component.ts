@@ -22,6 +22,10 @@ export class CalendarNavComponent {
   showGoToCurrent = input<boolean>(true);
   theme = input<string>('');
   locale = input<string>('fa');
+  labelAction = input<string>('');
+  previousLabel = input<string>('');
+  nextLabel = input<string>('');
+  currentLabel = input<string>('');
 
   private readonly labelsByLocale: Record<string, Record<string, string>> = {
     fa: {
@@ -37,6 +41,10 @@ export class CalendarNavComponent {
   };
 
   labels = computed(() => this.labelsByLocale[this.locale()] || this.labelsByLocale['en']);
+  displayLabel = computed(() => this.locale() === 'fa'
+    ? this.label().replace(/\d/g, digit => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)])
+    : this.label());
+  headerAction = computed(() => this.labelAction() || (this.locale() === 'fa' ? 'انتخاب ماه و سال' : 'Choose month and year'));
 
   /** Drives the nav bar's own direction explicitly (see the .rtl class in
    * calendar-nav.component.less) instead of leaving it to whatever direction

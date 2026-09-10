@@ -3,10 +3,13 @@
        [hidden]="componentConfig().hideInputContainer"
        class="dp-input-container">
     <label class="dp-sr-only" [for]="inputId">
-      {{ placeholder() || (componentConfig().locale === 'fa' ? 'انتخاب تاریخ' : 'Choose date') }}
+      {{ placeholder() || dialogLabel() }}
     </label>
     <input
         (ngModelChange)="onViewDateChange($event)"
+        (focus)="componentConfig().disableKeypress ? inputFocused() : null"
+        (blur)="onTouchedCallback()"
+        (keydown)="onInputKeydown($event)"
         [disabled]="disabled()"
         [ngModel]="inputElementValue()"
         [placeholder]="placeholder()"
@@ -15,15 +18,22 @@
         [attr.dir]="componentConfig().locale === 'fa' ? 'rtl' : 'ltr'"
         aria-haspopup="dialog"
         [attr.aria-expanded]="isModalOpen()"
+        [attr.aria-controls]="isModalOpen() ? inputId + '-dialog' : null"
+        [attr.aria-invalid]="showMinDateIsNotValid() || showMaxDateIsNotValid() ? 'true' : null"
+        autocomplete="off"
+        spellcheck="false"
         class="dp-picker-input"
         [id]="inputId"
         type="text"/>
     @if (showCalendarIcon()) {
       <button #inputElementLabel
-              (click)="inputFocused()"
+              (click)="showCalendars()"
               [attr.aria-label]="componentConfig().locale === 'fa' ? 'باز کردن تقویم' : 'Open calendar'"
               [class.disabled]="disabled()"
               [disabled]="disabled()"
+              aria-haspopup="dialog"
+              [attr.aria-expanded]="isModalOpen()"
+              [attr.aria-controls]="isModalOpen() ? inputId + '-dialog' : null"
               class="datepicker-button"
               type="button">
         <svg class="datepicker-icon"
@@ -59,7 +69,10 @@
     @if (isModalOpen() || componentConfig().hideInputContainer) {
     <div #container
          (keydown)="onContainerKeydown($event)"
+         (focusout)="onContainerFocusOut($event)"
+         [id]="inputId + '-dialog'"
          [attr.aria-label]="dialogLabel()"
+         [attr.aria-describedby]="isRangeMode() ? inputId + '-range-hint' : null"
          [attr.aria-modal]="componentConfig().dropdown ? null : 'true'"
          role="dialog"
          tabindex="-1">
@@ -70,6 +83,21 @@
           <div class="dp-dialog-heading" [attr.dir]="componentConfig().locale === 'fa' ? 'rtl' : 'ltr'">
             <span>{{ dialogLabel() }}</span>
             <button type="button" (click)="closeModal()" [attr.aria-label]="componentConfig().locale === 'fa' ? 'بستن تقویم' : 'Close calendar'">×</button>
+          </div>
+        }
+        @if (isRangeMode()) {
+          <div class="dp-range-progress" [attr.dir]="componentConfig().locale === 'fa' ? 'rtl' : 'ltr'">
+            <p class="dp-range-hint" [id]="inputId + '-range-hint'" role="status" aria-live="polite" aria-atomic="true">{{ rangeGuidance() }}</p>
+            <div class="dp-range-endpoints">
+              <div class="dp-range-endpoint" [class.dp-range-active]="!selected().length">
+                <span>{{ componentConfig().locale === 'fa' ? 'شروع بازه' : 'Start date' }}</span>
+                <strong>{{ rangeEndpoint(0) }}</strong>
+              </div>
+              <div class="dp-range-endpoint" [class.dp-range-active]="selected().length === 1">
+                <span>{{ componentConfig().locale === 'fa' ? 'پایان بازه' : 'End date' }}</span>
+                <strong>{{ rangeEndpoint(1) }}</strong>
+              </div>
+            </div>
           </div>
         }
         <dp-day-calendar #dayCalendar
@@ -125,12 +153,7 @@
                               opens="left">
         </dp-day-time-calendar>
         @if (showActionButtons()) {
-          <div class="dp-picker-actions">
-            @if (isRangeMode()) {
-              <span class="dp-range-summary">
-                {{ inputElementValue() || (componentConfig().locale === 'fa' ? 'بازه را انتخاب کنید' : 'Pick a range') }}
-              </span>
-            }
+          <div class="dp-picker-actions" [attr.dir]="componentConfig().locale === 'fa' ? 'rtl' : 'ltr'">
             <div class="dp-actions-row">
               <button type="button" class="dp-btn dp-btn-close" (click)="closeModal()">
                 {{ componentConfig().locale === 'fa' ? 'انصراف' : 'Cancel' }}

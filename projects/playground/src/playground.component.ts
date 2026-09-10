@@ -262,7 +262,7 @@ export class PlaygroundComponent {
     },
     {
       title: 'بازهٔ روزها',
-      hint: 'برای سفر یا مرخصی؛ شروع و پایان را انتخاب و تأیید کنید.',
+      hint: 'برای سفر یا مرخصی؛ شروع و پایان را انتخاب و تایید کنید.',
       mode: 'day',
       selectionMode: 'range',
       control: this.dayRange
@@ -283,7 +283,7 @@ export class PlaygroundComponent {
     },
     {
       title: 'انتخاب ساعت',
-      hint: 'برای برنامهٔ روزانه؛ زمان دلخواه را تنظیم و تأیید کنید.',
+      hint: 'برای برنامهٔ روزانه؛ زمان دلخواه را تنظیم و تایید کنید.',
       mode: 'time',
       selectionMode: 'single',
       control: new FormControl('')

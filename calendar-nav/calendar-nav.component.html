@@ -1,22 +1,26 @@
 <div class="dp-calendar-nav-container">
-  <div class="dp-nav-header">
+  <div class="dp-nav-header" aria-live="polite" aria-atomic="true">
     <span [attr.data-hidden]="isLabelClickable()"
           [hidden]="isLabelClickable()"
-          [innerText]="label()">
+          [innerText]="displayLabel()">
     </span>
     <button (click)="labelClicked()"
             [attr.data-hidden]="!isLabelClickable()"
             [hidden]="!isLabelClickable()"
-            [innerText]="label()"
+            [attr.aria-label]="displayLabel() + '، ' + headerAction()"
+            [title]="headerAction()"
             class="dp-nav-header-btn"
             type="button">
+      <span>{{ displayLabel() }}</span>
+      <span class="dp-nav-header-chevron" aria-hidden="true"></span>
     </button>
   </div>
 
   <div class="dp-nav-btns-container">
     <div class="dp-calendar-nav-container-left">
       <button (click)="leftNavClicked()"
-              [attr.aria-label]="labels().prev"
+              [attr.aria-label]="previousLabel() || labels().prev"
+              [title]="previousLabel() || labels().prev"
               [attr.data-hidden]="!showLeftNav()"
               [disabled]="leftNavDisabled()"
               [hidden]="!showLeftNav()"
@@ -26,15 +30,17 @@
     </div>
     @if (showGoToCurrent()) {
       <button (click)="onGoToCurrent.emit()"
-              [attr.aria-label]="labels().today"
+              [attr.aria-label]="currentLabel() || labels().today"
+              [title]="currentLabel() || labels().today"
               class="dp-current-location-btn"
               type="button">
-        {{ locale() === 'fa' ? 'امروز' : 'Today' }}
+        {{ currentLabel() || (locale() === 'fa' ? 'امروز' : 'Today') }}
       </button>
     }
     <div class="dp-calendar-nav-container-right">
       <button (click)="rightNavClicked()"
-              [attr.aria-label]="labels().next"
+              [attr.aria-label]="nextLabel() || labels().next"
+              [title]="nextLabel() || labels().next"
               [attr.data-hidden]="!showRightNav()"
               [disabled]="rightNavDisabled()"
               [hidden]="!showRightNav()"

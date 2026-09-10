@@ -142,12 +142,13 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   private committedSelection: Moment[] = [];
   /** Element focused before the dialog opened, so closing can hand focus back. */
   private lastFocusedElement: HTMLElement | null = null;
+  private restoringFocus = false;
   /* `:not([tabindex="-1"])` on every branch, not just the last: the day grid
      uses a roving tabindex, so most of its buttons are deliberately out of
      the tab order. Counting them here would put the trap's "last" element on
      a button Tab never reaches, and focus would escape the dialog. */
   private static readonly FOCUSABLE_SELECTOR =
-    'button:not([disabled]):not([tabindex="-1"]), [href]:not([tabindex="-1"]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])';
+    'button:not([disabled]):not([tabindex="-1"]), [href]:not([tabindex="-1"]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"]):not([disabled])';
 
   // Computeds
   componentConfig = computed(() => this.dayPickerService.getConfig({
@@ -165,6 +166,13 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
       ? {day: 'انتخاب تاریخ', month: 'انتخاب ماه', time: 'انتخاب ساعت', daytime: 'انتخاب تاریخ و ساعت'}
       : {day: 'Choose date', month: 'Choose month', time: 'Choose time', daytime: 'Choose date and time'};
     return labels[this.mode()];
+  });
+  rangeGuidance = computed(() => {
+    const isFa = this.componentConfig().locale === 'fa';
+    const count = this.selected().length;
+    if (!count) return isFa ? 'ابتدا تاریخ شروع را انتخاب کنید' : 'Choose a start date';
+    if (count === 1) return isFa ? 'حالا تاریخ پایان را انتخاب کنید' : 'Now choose an end date';
+    return isFa ? 'بازه آماده است؛ برای ثبت، تایید کنید' : 'Your range is ready to confirm';
   });
   dayCalendarConfig = computed(() => this.dayPickerService.getDayConfigService(this.componentConfig()));
   dayTimeCalendarConfig = computed(() => this.dayPickerService.getDayTimeConfigService(this.componentConfig()));
@@ -331,7 +339,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
       // Click on the backdrop itself closes the modal
       if (dialog?.nativeElement && target === dialog.nativeElement) {
-        this.closeModal();
+        if (this.componentConfig().hideOnOutsideClick) this.closeModal();
         return;
       }
 
@@ -358,23 +366,28 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   }
 
   inputFocused() {
-    if (this.disabled()) return;
-    if (!this.componentConfig().openOnFocus) {
-      return;
+    if (this.restoringFocus || !this.componentConfig().openOnFocus) return;
+    this.showCalendars();
+  }
+
+  onInputKeydown(event: KeyboardEvent) {
+    if (event.key === 'ArrowDown' || event.key === 'Enter'
+        || (event.key === ' ' && this.componentConfig().disableKeypress)) {
+      event.preventDefault();
+      this.showCalendars();
+    } else if (event.key === 'Escape' && this.isModalOpen()) {
+      event.preventDefault();
+      this.closeModal();
     }
-    this.isModalOpen.set(true);
-    this.showDialogInTopLayerAfterRender();
-    this.isFocusedTrigger = true;
-    setTimeout(() => {
-      this.hideStateHelper = false;
-      this.isFocusedTrigger = false;
-    }, this.componentConfig().onOpenDelay || 0);
   }
 
   showCalendars() {
     if (this.disabled() || this.isModalOpen()) return;
     this.committedSelection = this.selected().map(m => m.clone());
-    this.lastFocusedElement = document.activeElement as HTMLElement;
+    const host = this.elemRef.nativeElement as HTMLElement;
+    this.lastFocusedElement = host.contains(document.activeElement)
+      ? document.activeElement as HTMLElement
+      : host.querySelector<HTMLElement>('.dp-picker-input');
     this.hideStateHelper = true;
     this.isModalOpen.set(true);
     this.onOpen.emit();
@@ -384,7 +397,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     this.listenForOutsideClick();
   }
 
-  hideCalendar() {
+  hideCalendar(restoreFocus = true) {
     if (!this.isModalOpen()) return;
     this.hideDialogFromTopLayer();
     this.isModalOpen.set(false);
@@ -398,7 +411,11 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     this.stopGlobalListeners();
     // Hand keyboard focus back to whatever opened the dialog rather than
     // dropping it on <body>, which is what closing a modal usually does wrong.
-    this.lastFocusedElement?.focus();
+    if (restoreFocus && this.lastFocusedElement?.isConnected) {
+      this.restoringFocus = true;
+      this.lastFocusedElement.focus({preventScroll: true});
+      this.restoringFocus = false;
+    }
     this.lastFocusedElement = null;
   }
 
@@ -417,7 +434,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     const host = this.elemRef.nativeElement as HTMLElement;
     const unlisten = this.renderer.listen('document', 'click', (event: MouseEvent) => {
       if (!host.contains(event.target as Node)) {
-        this.closeModal();
+        this.closeModal(!this.componentConfig().dropdown);
       }
     });
     this.globalListnersUnlisteners.push(unlisten);
@@ -434,7 +451,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
       if (!container) return;
 
       const preferred = container.querySelector<HTMLElement>(
-        '.dp-selected, [aria-current="date"]'
+        'button.dp-selected:not([disabled]), button[aria-current="date"]:not([disabled]), button[role="gridcell"][tabindex="0"]:not([disabled])'
       );
       const focusable = container.querySelectorAll<HTMLElement>(DatePickerModalComponent.FOCUSABLE_SELECTOR);
       (preferred || focusable[0] || container).focus();
@@ -475,12 +492,13 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
    */
   onContainerKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape') {
+      event.preventDefault();
       this.closeModal();
       event.stopPropagation();
       return;
     }
 
-    if (event.key !== 'Tab') return;
+    if (event.key !== 'Tab' || this.componentConfig().dropdown || this.componentConfig().hideInputContainer) return;
 
     const container = this.calendarContainer()?.nativeElement as HTMLElement | undefined;
     if (!container) return;
@@ -488,18 +506,38 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     const focusable = Array.from(
       container.querySelectorAll<HTMLElement>(DatePickerModalComponent.FOCUSABLE_SELECTOR)
     ).filter(el => el.offsetParent !== null);
-    if (!focusable.length) return;
+    if (!focusable.length) {
+      event.preventDefault();
+      container.focus();
+      return;
+    }
 
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
 
-    if (event.shiftKey && document.activeElement === first) {
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === container)) {
       event.preventDefault();
       last.focus();
     } else if (!event.shiftKey && document.activeElement === last) {
       event.preventDefault();
       first.focus();
     }
+  }
+
+  onContainerFocusOut(event: FocusEvent) {
+    if (!this.componentConfig().dropdown || !event.relatedTarget) return;
+    const host = this.elemRef.nativeElement as HTMLElement;
+    if (!host.contains(event.relatedTarget as Node)) this.closeModal(false);
+  }
+
+  rangeEndpoint(index: number): string {
+    const value = this.selected()[index];
+    if (!value) return this.componentConfig().locale === 'fa' ? 'انتخاب نشده' : 'Not selected';
+    const locale = this.componentConfig().locale || 'fa';
+    const formatted = value.clone().locale(locale).format(this.mode() === 'month' ? 'MMMM YYYY' : 'D MMMM YYYY');
+    return locale === 'fa'
+      ? formatted.replace(/\d/g, digit => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)])
+      : formatted;
   }
 
   onViewDateChange(value: CalendarValue) {
@@ -596,11 +634,12 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
     // With an action bar the value stays pending until the user confirms, so
     // hosts do not receive a stream of half-finished values.
-    if (!this.showActionButtons()) {
+    const selectionIsComplete = !this.isRangeMode() || nextSelected.length === 2;
+    if (!this.showActionButtons() && selectionIsComplete) {
       this.commitSelection(nextSelected);
     }
 
-    if (forceClose || (!this.showActionButtons() && this.componentConfig().closeOnSelect)) {
+    if (forceClose || (!this.showActionButtons() && selectionIsComplete && this.componentConfig().closeOnSelect)) {
       this.closeModal();
     }
     this.cd.markForCheck();
@@ -632,18 +671,20 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     this.onRightNav.emit(change);
   }
 
-  closeModal(): void {
+  closeModal(restoreFocus = true): void {
+    if (!this.isModalOpen()) return;
     // Discard anything the user did not confirm.
-    if (this.showActionButtons()) {
+    if (this.showActionButtons() || this.isRangeMode()) {
       const restored = this.committedSelection.map(m => m.clone());
       this.selected.set(restored);
       this.updateInputElementValue(restored);
     }
-    this.hideCalendar();
+    this.hideCalendar(restoreFocus);
     this.cd.markForCheck();
   }
 
   confirmModal(): void {
+    if (this.disabled() || !this.canConfirm) return;
     let selection = this.selected();
 
     if (!selection.length) {
