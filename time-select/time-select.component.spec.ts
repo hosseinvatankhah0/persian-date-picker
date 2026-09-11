@@ -14,12 +14,12 @@ describe('Component: TimeSelectComponent', () => {
   let component: TimeSelectComponent;
   let fixture: ComponentFixture<TimeSelectComponent>;
 
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      declarations: [TimeSelectComponent, CalendarNavComponent, MonthCalendarComponent],
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TimeSelectComponent, CalendarNavComponent, MonthCalendarComponent],
       providers: [TimeSelectService, UtilsService]
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(TimeSelectComponent);

@@ -25,10 +25,15 @@ describe('Service: DatePickerModal', () => {
 
   it('should check getConfig method for dates format', inject([DatePickerModalService],
     (service: DatePickerModalService) => {
+      /* locale is explicit because getConfig defaults to 'fa', which would read
+         these as Jalali years. Note the asymmetry this documents: the public
+         PersianDatePickerComponent detects the calendar of a min/max string
+         from its year, this inner service does not. */
       const config1 = service.getConfig(<any>{
         min: '2016-10-25',
         max: '2017-10-25',
-        format: 'YYYY-MM-DD'
+        format: 'YYYY-MM-DD',
+        locale: 'en'
       });
 
       expect((<Moment>config1.min).isSame(moment('2016-10-25', 'YYYY-MM-DD'), 'day')).toBe(true);

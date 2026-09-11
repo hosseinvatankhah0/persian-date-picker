@@ -99,7 +99,10 @@ dp-date-picker-modal .dp-picker-actions {
     font-size: 12.5px;
     font-weight: 500;
     cursor: pointer;
-    min-height: 44px;
+    /* 44px only where a finger needs it. On a mouse the action row sits right
+       under the grid and two 44px slabs there read as heavier than the calendar
+       above them, which is the actual subject of the dialog. */
+    min-height: 34px;
     padding: 0 10px;
     border-radius: @radius-sm;
     transition: background @transition-fast, opacity @transition-fast;
@@ -128,6 +131,10 @@ dp-date-picker-modal .dp-picker-actions {
 
     &:hover:not(:disabled) { background: @background-button-dark; }
   }
+
+  @media (pointer: coarse) {
+    .dp-btn { min-height: 44px; }
+  }
 }
 
 & {
@@ -138,17 +145,27 @@ dp-date-picker-modal .dp-picker-actions {
      gone rather than dead-but-harmless. */
   dp-date-picker-modal {
     &.dp-default {
-      /* Fills whatever the host gives it instead of a fixed px default — a
-         form control should size to its container, not the other way
-         around. A standalone <input> with no container at all still gets a
-         reasonable size from the browser's own text-input default. */
+      /* The box is host-controlled through custom properties rather than by
+         out-specifying this rule: a design system sets --dp-input-height once
+         (or `auto` to size from padding alone) and the rest follows. The
+         fallbacks are the library's own look, so a picker dropped into a page
+         with no host CSS still renders correctly.
+
+         The height fallback stays a real 48px rather than `auto`: padding-only
+         sizing at this font size lands near 34px, which would put the input
+         under the 44px touch target every other control here honours at
+         (pointer: coarse). Hosts that want intrinsic sizing opt into it.
+
+         font-family is inherit and NOT a variable on purpose — inputs do not
+         inherit the page font on their own, so this one line is what pulls in
+         the host's typeface. */
       .dp-picker-input {
         box-sizing: border-box;
         width: 100%;
-        height: 48px;
-        padding: 8px 12px;
-        border: 1px solid @border-card-color;
-        border-radius: @radius-sm;
+        height: var(--dp-input-height, 48px);
+        padding: var(--dp-input-padding, 8px 12px);
+        border: var(--dp-input-border, 1px solid @border-card-color);
+        border-radius: var(--dp-input-radius, @radius-sm);
         font-size: 13px;
         font-family: inherit;
         color: @c-text;
@@ -160,9 +177,14 @@ dp-date-picker-modal .dp-picker-actions {
         &:hover:not(:disabled) { border-color: darken(@border-card-color, 15%); }
         &:disabled { background: @c-surface-muted; cursor: not-allowed; }
 
+        /* The ring is drawn by the shadow's own solid layer, not by tinting
+           the border, so it survives a host setting --dp-input-border: none —
+           otherwise removing the border would leave focus marked by a 15%
+           halo alone, far under the 3:1 WCAG 2.4.11 asks for. 2px because
+           that criterion wants a perimeter at least that thick. */
         &:focus {
           border-color: @c-primary-solid;
-          box-shadow: 0 0 0 3px fade(@c-primary-solid, 15%);
+          box-shadow: 0 0 0 2px @c-primary-solid, 0 0 0 5px fade(@c-primary-solid, 15%);
         }
       }
     }
@@ -200,7 +222,7 @@ dp-date-picker-modal .dp-picker-actions {
 
 .date-error {
   font-size: 12px;
-  color: #db524b;
+  color: @c-danger;
   margin-top: 3px;
 }
 
@@ -218,7 +240,7 @@ dp-date-picker-modal .dp-picker-actions {
   background: transparent;
   padding: 0 6px;
   font: inherit;
-  color: #42526e;
+  color: @c-text-muted;
   cursor: pointer;
   height: 100%;
   display: flex;
@@ -286,12 +308,18 @@ dp-date-picker-modal:not(.inline-picker) {
     border: 0;
   }
 
+  /* Radius and shadow live here, and only here. index.component.less used to
+     restate them with !important because this selector outranks its own —
+     which meant the card's real look was decided by a flag rather than by
+     either rule. These are the values that flag was enforcing: a shadow
+     tinted toward the palette's green instead of neutral black, and a radius
+     matching the "big card, bigger radius" rule the base .dp-popup follows. */
   .dp-picker-dialog:not([hidden]) .dp-popup {
     position: relative;
     left: auto;
     transform: none;
-    border-radius: 10px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    border-radius: 16px;
+    box-shadow: 0 18px 60px rgba(22, 43, 38, 0.16);
     /* No padding: the action bar's divider must span the full card width. */
     padding: 0;
     animation: dpModalPop 0.16s ease-out;

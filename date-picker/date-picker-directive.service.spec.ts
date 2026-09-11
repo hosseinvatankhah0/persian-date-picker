@@ -13,7 +13,7 @@ describe('Service: DatePickerModalDirective', () => {
 
   it('should check convertToElement method', inject([DatePickerModalDirectiveService, UtilsService],
     (service: DatePickerModalDirectiveService, stubUtilsService: UtilsService) => {
-      stubUtilsService.closestParent = jasmine.createSpy('closestParent').and.returnValue('fakeElement');
+      stubUtilsService.closestParent = vi.fn().mockReturnValue('fakeElement');
 
       const baseElement = <any>{};
       const element1 = service.convertToHTMLElement({nativeElement: 'fakeElement'}, baseElement);
@@ -27,7 +27,7 @@ describe('Service: DatePickerModalDirective', () => {
 
   it('should check getConfig method', inject([DatePickerModalDirectiveService],
     (service: DatePickerModalDirectiveService) => {
-      service.convertToHTMLElement = jasmine.createSpy('convertToHTMLElement').and.returnValue('fakeElement');
+      service.convertToHTMLElement = vi.fn().mockReturnValue('fakeElement');
 
       const config1 = service.getConfig();
       expect(config1).toEqual({hideInputContainer: true});

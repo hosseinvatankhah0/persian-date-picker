@@ -16,7 +16,9 @@ describe('Service: MonthCalendarService', () => {
   it('should check the generateYear method', inject([MonthCalendarService], (service: MonthCalendarService) => {
     const year = moment('14-01-1987', 'DD-MM-YYYY');
     const selected = moment('14-01-1987', 'DD-MM-YYYY');
-    const genYear = service.generateYear({}, year, [selected]);
+    // Gregorian explicitly: the service defaults to 'fa', and this test builds
+    // its expectations from a Gregorian moment.
+    const genYear = service.generateYear({locale: 'en'}, year, [selected]);
 
     const current = year.clone().startOf('year');
     genYear.forEach((row) => {

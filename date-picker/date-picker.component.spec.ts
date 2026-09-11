@@ -20,16 +20,20 @@ describe('Component: DatePickerModalComponent', () => {
   let component: DatePickerModalComponent;
   let fixture: ComponentFixture<DatePickerModalComponent>;
 
+  /* `mode` is a signal input, so it goes through setInput; and the calendars
+     live behind the dialog's @if, so the view queries stay empty until the
+     picker is actually open. */
   const setComponentMode = function (mode: CalendarMode) {
-    component.mode = mode;
-    component.init();
+    fixture.componentRef.setInput('mode', mode);
+    component.showCalendars();
     fixture.detectChanges();
   };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [CommonModule, FormsModule],
-      declarations: [
+      imports: [
+        CommonModule,
+        FormsModule,
         DatePickerModalComponent,
         DayTimeCalendarComponent,
         DayCalendarComponent,
@@ -60,24 +64,24 @@ describe('Component: DatePickerModalComponent', () => {
   it('should emit event goToCurrent when day calendar emit', () => {
     setComponentMode('day');
 
-    spyOn(component.onGoToCurrent, 'emit');
-    component.dayCalendarRef.onGoToCurrent.emit();
+    vi.spyOn(component.onGoToCurrent, 'emit');
+    component.dayCalendarRef().onGoToCurrent.emit();
     expect(component.onGoToCurrent.emit).toHaveBeenCalledWith();
   });
 
   it('should emit event goToCurrent when month calendar emit', () => {
     setComponentMode('month');
 
-    spyOn(component.onGoToCurrent, 'emit');
-    component.monthCalendarRef.onGoToCurrent.emit();
+    vi.spyOn(component.onGoToCurrent, 'emit');
+    component.monthCalendarRef().onGoToCurrent.emit();
     expect(component.onGoToCurrent.emit).toHaveBeenCalledWith();
   });
 
   it('should emit event goToCurrent when daytime calendar emit', () => {
     setComponentMode('daytime');
 
-    spyOn(component.onGoToCurrent, 'emit');
-    component.dayTimeCalendarRef.onGoToCurrent.emit();
+    vi.spyOn(component.onGoToCurrent, 'emit');
+    component.dayTimeCalendarRef().onGoToCurrent.emit();
     expect(component.onGoToCurrent.emit).toHaveBeenCalledWith();
   });
 });

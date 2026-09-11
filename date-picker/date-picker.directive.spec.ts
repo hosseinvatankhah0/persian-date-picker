@@ -15,7 +15,7 @@ class TestComponent {
 describe('Directive: DpDayPicker', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [TestComponent],
+      imports: [TestComponent],
       providers: [UtilsService]
     });
   });
@@ -46,6 +46,7 @@ describe('Directive: DpDayPicker', () => {
     expect(topElement.id).toBe('top');
 
     const notFoundElement = service.closestParent(inputElement, '.notFound');
-    expect(notFoundElement).toBeUndefined();
+    // closestParent is typed `HTMLElement | null` and returns null on a miss.
+    expect(notFoundElement).toBeNull();
   }));
 });

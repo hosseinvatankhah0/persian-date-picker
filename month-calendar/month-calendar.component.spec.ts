@@ -14,17 +14,17 @@ describe('Component: MonthCalendarComponent', () => {
   let component: MonthCalendarComponent;
   let fixture: ComponentFixture<MonthCalendarComponent>;
 
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      declarations: [MonthCalendarComponent, CalendarNavComponent],
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MonthCalendarComponent, CalendarNavComponent],
       providers: [MonthCalendarService, UtilsService]
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(MonthCalendarComponent);
     component = fixture.componentInstance;
-    component.config = component.monthCalendarService.getConfig({});
+    fixture.componentRef.setInput('config', component.monthCalendarService.getConfig({}));
     fixture.detectChanges();
   });
 
@@ -66,7 +66,8 @@ describe('Component: MonthCalendarComponent', () => {
     });
 
     it('custom days', () => {
-      component.componentConfig.monthBtnCssClassCallback = (day: Moment) => 'custom-class';
+      fixture.componentRef.setInput('config', {monthBtnCssClassCallback: (day: Moment) => 'custom-class'});
+      fixture.detectChanges();
 
       expect(component.getMonthBtnCssClass({
         ...defaultMonth
@@ -77,7 +78,7 @@ describe('Component: MonthCalendarComponent', () => {
     });
 
     it('should emit event goToCurrent function called', () => {
-      spyOn(component.onGoToCurrent, 'emit');
+      vi.spyOn(component.onGoToCurrent, 'emit');
       component.goToCurrent();
       expect(component.onGoToCurrent.emit).toHaveBeenCalledWith();
     });

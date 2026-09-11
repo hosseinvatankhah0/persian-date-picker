@@ -16,10 +16,10 @@ describe('Component: DayTimeCalendarComponent', () => {
   let component: DayTimeCalendarComponent;
   let fixture: ComponentFixture<DayTimeCalendarComponent>;
 
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      imports: [FormsModule],
-      declarations: [
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        FormsModule,
         DayTimeCalendarComponent,
         DayCalendarComponent,
         TimeSelectComponent,
@@ -33,7 +33,7 @@ describe('Component: DayTimeCalendarComponent', () => {
         UtilsService
       ]
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(DayTimeCalendarComponent);
@@ -47,7 +47,7 @@ describe('Component: DayTimeCalendarComponent', () => {
   });
 
   it('should emit event goToCurrent when nav emit', () => {
-    spyOn(component.onGoToCurrent, 'emit');
+    vi.spyOn(component.onGoToCurrent, 'emit');
     component.dayCalendarRef.onGoToCurrent.emit();
     expect(component.onGoToCurrent.emit).toHaveBeenCalledWith();
   });

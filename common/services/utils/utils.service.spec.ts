@@ -122,13 +122,18 @@ describe('Service: ObUtilsService', () => {
 
   it('check convertToString', inject([UtilsService], (service: UtilsService) => {
     const format = 'MM/DD/YYYY';
-    expect(service.convertToString(undefined as any, format)).toEqual('');
-    expect(service.convertToString('', format)).toEqual('');
-    expect(service.convertToString(moment(), format)).toEqual(moment().format(format));
-    expect(service.convertToString([moment()], format)).toEqual(moment().format(format));
-    expect(service.convertToString([moment(), moment().add(1, 'd')], format))
+    /* Passed explicitly because convertToString defaults to 'fa' — it forces
+       the calendar rather than reading it off the moment it is handed, which
+       is what keeps the picker's output from depending on whichever locale a
+       caller's moment happened to carry. These expectations are Gregorian. */
+    const en = 'en';
+    expect(service.convertToString(undefined as any, format, en)).toEqual('');
+    expect(service.convertToString('', format, en)).toEqual('');
+    expect(service.convertToString(moment(), format, en)).toEqual(moment().format(format));
+    expect(service.convertToString([moment()], format, en)).toEqual(moment().format(format));
+    expect(service.convertToString([moment(), moment().add(1, 'd')], format, en))
       .toEqual(moment().format(format) + ' | ' + moment().add(1, 'd').format(format));
-    expect(service.convertToString([moment().format(format), moment().add(1, 'd').format(format)], format))
+    expect(service.convertToString([moment().format(format), moment().add(1, 'd').format(format)], format, en))
       .toEqual(moment().format(format) + ' | ' + moment().add(1, 'd').format(format));
   }));
 });

@@ -1,6 +1,6 @@
 ﻿/* eslint-disable */
 // @ts-nocheck
-import {ComponentFixture, TestBed, waitForAsync} from '@angular/core/testing';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {UtilsService} from '../common/services/utils/utils.service';
 import {CalendarNavComponent} from '../calendar-nav/calendar-nav.component';
 import momentNs, {Moment} from 'jalali-moment';
@@ -15,17 +15,21 @@ describe('Component: DayCalendarComponent', () => {
   let component: DayCalendarComponent;
   let fixture: ComponentFixture<DayCalendarComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
-      declarations: [DayCalendarComponent, CalendarNavComponent, MonthCalendarComponent],
+  /* Plain async rather than waitForAsync: the latter needs zone.js, which this
+     package does not ship — the library is zoneless, and pulling zone.js in
+     just for tests would run them under a change-detection model the app never
+     uses. compileComponents() already returns a promise. */
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DayCalendarComponent, CalendarNavComponent, MonthCalendarComponent],
       providers: [DayCalendarService, UtilsService]
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(DayCalendarComponent);
     component = fixture.componentInstance;
-    component.config = component.dayCalendarService.getConfig({});
+    fixture.componentRef.setInput('config', component.dayCalendarService.getConfig({}));
     fixture.detectChanges();
   });
 
@@ -107,7 +111,8 @@ describe('Component: DayCalendarComponent', () => {
     });
 
     it('custom days', () => {
-      component.componentConfig.dayBtnCssClassCallback = (day: Moment) => 'custom-class';
+      fixture.componentRef.setInput('config', {dayBtnCssClassCallback: (day: Moment) => 'custom-class'});
+      fixture.detectChanges();
 
       expect(component.getDayBtnCssClass({
         ...defaultDay
@@ -120,20 +125,22 @@ describe('Component: DayCalendarComponent', () => {
 
   describe('should have the correct weekday format', () => {
     it('weekdayFormat', () => {
-      component.componentConfig.weekDayFormat = 'd';
+      fixture.componentRef.setInput('config', {weekDayFormat: 'd'});
+      fixture.detectChanges();
 
       expect(component.getWeekdayName(moment())).toBe(moment().format('d'));
     });
 
     it('weekdayFormatter', () => {
-      component.componentConfig.weekDayFormatter = (x: number) => x.toString();
+      fixture.componentRef.setInput('config', {weekDayFormatter: (x: number) => x.toString()});
+      fixture.detectChanges();
 
       expect(component.getWeekdayName(moment())).toBe(moment().day().toString());
     });
   });
 
   it('should emit event goToCurrent function called', () => {
-    spyOn(component.onGoToCurrent, 'emit');
+    vi.spyOn(component.onGoToCurrent, 'emit');
     component.goToCurrent();
     expect(component.onGoToCurrent.emit).toHaveBeenCalled();
   });

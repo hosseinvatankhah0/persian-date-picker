@@ -1,3 +1,5 @@
+@import '../common/styles/variables';
+
 .persian-date-picker-wrapper {
   position: relative;
   display: inline-block;
@@ -38,7 +40,7 @@
     background: transparent;
     font: inherit;
     cursor: pointer;
-    color: #888;
+    color: @c-text-muted;
     font-size: 14px;
     width: 24px;
     height: 24px;
@@ -55,18 +57,20 @@
     }
 
     &:hover:not(:disabled) {
-      color: #e53935;
-      background-color: rgba(229, 57, 53, 0.1);
+      color: @c-danger;
+      background-color: fade(@c-danger, 10%);
     }
 
+    /* Was a stray Material blue — the only non-teal focus ring in the
+       library, on the one control that sits inside the input. */
     &:focus-visible {
-      outline: 2px solid #1976d2;
+      outline: 2px solid @c-primary-solid;
       outline-offset: 1px;
     }
 
     &:disabled {
       cursor: not-allowed;
-      color: #ccc;
+      color: @c-light-gray;
       opacity: 0.7;
     }
   }
@@ -120,10 +124,15 @@
    Angular's global-style bundling order — a real conflict this project used
    to have (one file said 252px fixed, this one said 100% + 42px), silently
    arbitrated by build order rather than by design intent. */
+/* Only the border is set here now. Radius and shadow moved to the modal rule
+   in date-picker.component.less, which outranks this selector — restating
+   them here meant they only ever applied because of an !important, and that
+   flag also denied the host any way to restyle the popup short of using one
+   themselves. The border has no competing rule above this specificity (the
+   base .dp-popup sets `border: none` at one class plus an element), so it
+   needs no flag either. */
 .dp-default {
   .dp-popup {
-    border-radius: 16px !important;
-    box-shadow: 0 18px 60px rgba(22, 43, 38, 0.16) !important;
-    border: 1px solid #dfe7e2 !important;
+    border: 1px solid @border-card-color;
   }
 }

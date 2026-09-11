@@ -1,3 +1,4 @@
+import {vi} from 'vitest';
 import {Injector, runInInjectionContext} from '@angular/core';
 import moment from 'jalali-moment';
 import {UtilsService} from '../common/services/utils/utils.service';
@@ -13,14 +14,14 @@ describe('Calendar navigation regressions', () => {
     const months = service.generateYear({locale: 'fa'}, display).flat();
     expect(months.length).toBe(12);
     expect(months.map(month => month.date.jMonth())).toEqual(Array.from({length: 12}, (_, index) => index));
-    expect(months.every(month => month.date.jYear() === 1405)).toBeTrue();
+    expect(months.every(month => month.date.jYear() === 1405)).toBe(true);
     expect(display.locale()).toBe('en');
   });
 
   it('keeps Gregorian months in a four by three grid', () => {
     const months = service.generateYear({locale: 'en'}, moment('2026-09-07'));
     expect(months.length).toBe(4);
-    expect(months.every(row => row.length === 3)).toBeTrue();
+    expect(months.every(row => row.length === 3)).toBe(true);
     expect(months.flat().map(month => month.date.month())).toEqual(Array.from({length: 12}, (_, index) => index));
   });
 
@@ -52,7 +53,7 @@ describe('Calendar navigation regressions', () => {
   it('emits form changes for month selection and ignores disabled months', () => {
     const injector = Injector.create({providers: []});
     const component = runInInjectionContext(injector, () => new MonthCalendarComponent(service, utils, {markForCheck() {}} as any));
-    const changed = jasmine.createSpy('changed');
+    const changed = vi.fn();
     component.registerOnChange(changed);
     const months = service.generateYear(service.getConfig({}), moment().locale('fa')).flat();
     component.monthClicked({...months[0], selected: false, disabled: false});

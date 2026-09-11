@@ -8,12 +8,12 @@ describe('CalendarNavComponent', () => {
   let component: CalendarNavComponent;
   let fixture: ComponentFixture<CalendarNavComponent>;
 
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      declarations: [CalendarNavComponent]
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CalendarNavComponent]
     })
       .compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(CalendarNavComponent);
@@ -29,7 +29,7 @@ describe('CalendarNavComponent', () => {
     const nativeElement = fixture.nativeElement;
     const goToCurrent = nativeElement.querySelector('.dp-current-location-btn');
 
-    spyOn(component.onGoToCurrent, 'emit');
+    vi.spyOn(component.onGoToCurrent, 'emit');
     goToCurrent.dispatchEvent(new Event('click'));
     expect(component.onGoToCurrent.emit).toHaveBeenCalledWith();
   });

@@ -100,8 +100,8 @@ npm install persian-date-picker-angular jalali-moment
 | Script | Purpose |
 |---|---|
 | `npm start` | Serves the playground app (`projects/playground`), which exercises every mode side by side. |
-| `ng test persian-date-picker` | Runs the unit suite (Vitest). The format, keyboard-navigation and range regression specs pass; several specs predating the Vitest builder still fail on Karma/Jasmine-only APIs. |
-| `npm test` | Runs the standalone month-navigation script only (`scripts/test-navigation.cjs`), not the unit suite. |
+| `npm test` | Runs the unit suite (Vitest) — 112 specs across the calendar, range, format and keyboard-navigation behaviour. |
+| `npm run test:navigation` | Runs the standalone month-navigation script (`scripts/test-navigation.cjs`) on its own. |
 | `npm run build:lib` | Builds the publishable package into `dist/persian-date-picker`. |
 | `npm run build:playground` | Production-builds the playground app. |
 | `npm run publish:lib` | Builds the library and publishes `dist/persian-date-picker` to npm. |
@@ -211,6 +211,38 @@ the model keeps that format's own calendar:
 A format containing `j`-prefixed tokens (`jYYYY`) is Jalali, one without is
 Gregorian — regardless of `locale`, which only drives the calendar UI. Set
 `display-format` to show the user one calendar while the form holds the other.
+
+## Theming the input box
+
+The text box reads its own box metrics from custom properties, so a host design
+system sets them once instead of having to out-specify the library's rules:
+
+| Property | Default | Notes |
+|---|---|---|
+| `--dp-input-height` | `48px` | Set `auto` to size from padding instead. |
+| `--dp-input-padding` | `8px 12px` | |
+| `--dp-input-border` | `1px solid #dfe7e2` | |
+| `--dp-input-radius` | `8px` | |
+
+```css
+app-persian-date-picker {
+  --dp-input-height: 40px;
+  --dp-input-border: 1px solid var(--my-field-border);
+  --dp-input-radius: 4px;
+}
+```
+
+The height default is a real `48px` rather than `auto` deliberately: at this font
+size, padding-only sizing lands near 31px, which is under the 44px touch target
+the rest of the picker honours at `(pointer: coarse)`. Opt into intrinsic sizing
+if your own layout already guarantees the target.
+
+`font-family` is not a variable — it is `inherit`, which is what pulls in the
+host's typeface, since inputs do not inherit the page font on their own.
+
+If you set `--dp-input-border: none`, give the field its own focus indicator: the
+built-in one is a tinted border plus a soft halo, and removing the border leaves
+only the halo.
 
 ## License
 MIT — see [LICENSE](LICENSE).

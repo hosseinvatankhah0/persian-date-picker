@@ -13,6 +13,16 @@
 @c-hover: #edf3ef;
 @c-divider: #dfe7e2;
 
+// One red, reached through two names because the roles are unrelated and may
+// yet diverge: a validation failure is not the same thing as Friday being the
+// weekend. The value clears 4.5:1 on white, which the three ad-hoc reds this
+// replaced did not all manage — the error message ran at 3.95:1.
+@c-danger: #c62828;
+@c-holiday: @c-danger;
+
+// Pressed state, one step past @c-hover.
+@c-active: darken(@c-hover, 6%);
+
 // Semantic aliases, named after their role rather than their raw value, so a
 // selector's intent reads at a glance (an icon color vs. a border color vs. a
 // button fill, even where several currently share the same hex).

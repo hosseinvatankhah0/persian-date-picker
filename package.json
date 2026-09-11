@@ -34,7 +34,7 @@
     "build": "ng build",
     "build:lib": "ng build persian-date-picker",
     "publish:lib": "npm run build:lib && cd dist/persian-date-picker && npm publish",
-    "test": "node scripts/test-navigation.cjs",
+    "test": "ng test persian-date-picker --watch=false",
     "test:navigation": "node scripts/test-navigation.cjs",
     "build:playground": "ng build playground",
     "lint": "ng lint",
