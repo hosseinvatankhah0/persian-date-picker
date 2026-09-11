@@ -35,16 +35,45 @@ export class UtilsService {
     };
   }
 
+  /**
+   * A leading four-digit year above 1500 can only be Gregorian — Jalali does
+   * not reach 1500 until the 22nd century, so nothing a caller realistically
+   * passes as a bound or a display date means a Jalali year up there. Returns
+   * null for anything not date-shaped, leaving the caller's own parsing to run.
+   *
+   * Static because PersianDatePickerComponent applies the same rule to the
+   * value bound through ngModel and does not inject this service; one copy of
+   * the rule is the point.
+   */
+  static parseGregorianDate(value: string): Moment | null {
+    const trimmed = value.trim();
+    const leadingYear = /^(\d{4})[-/]\d{1,2}[-/]\d{1,2}/.exec(trimmed);
+    if (!leadingYear || Number(leadingYear[1]) <= 1500) {
+      return null;
+    }
+    const parsed = moment(trimmed, [moment.ISO_8601, 'YYYY/MM/DD', 'YYYY-MM-DD']);
+    return parsed.isValid() ? parsed : null;
+  }
+
   createArray(size: number): number[] {
     return new Array(size).fill(1);
   }
 
+  /**
+   * Every caller here hands over a date the *developer* supplied — a min/max
+   * bound, a displayDate, a moveCalendarTo target — never text the end user
+   * typed (that path goes through isDateValid/getValidMomentArray). So a
+   * Gregorian string is detected rather than read against `locale`, which
+   * otherwise turned a perfectly ordinary `min: '2016-10-25'` into a Jalali
+   * year 2016 whenever locale was the default 'fa'. The re-locale below then
+   * puts the result back on the configured calendar either way.
+   */
   convertToMoment(date: SingleCalendarValue | undefined, format?: string, locale?: string): Moment {
     let m: Moment | null = null;
     if (!date) {
       m = null;
     } else if (typeof date === 'string') {
-      m = moment.from(date, locale || 'fa', format);
+      m = UtilsService.parseGregorianDate(date) || moment.from(date, locale || 'fa', format);
     } else {
       m = date.clone();
     }

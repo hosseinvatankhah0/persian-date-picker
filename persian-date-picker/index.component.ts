@@ -18,6 +18,7 @@ import moment, { Moment } from 'jalali-moment';
 import { DatePickerModalComponent } from '../date-picker/date-picker.component';
 import { CommonModule } from '@angular/common';
 import { TSelectionMode } from '../common/types/selection-mode.type';
+import { UtilsService } from '../common/services/utils/utils.service';
 
 export const PERSIAN_DATE_PICKER_VALUE_ACCESSOR: any = {
   provide: NG_VALUE_ACCESSOR,
@@ -290,12 +291,12 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
       return m.isValid() ? m : null;
     }
 
-    const isoMatch = /^(\d{4})[-/]\d{2}[-/]\d{2}/.exec(value);
-    if (isoMatch && Number(isoMatch[1]) > 1500) {
-      const gIso = moment(value, [moment.ISO_8601, 'YYYY/MM/DD', 'YYYY-MM-DD']);
-      if (gIso.isValid()) {
-        return gIso;
-      }
+    /* Shared with UtilsService.convertToMoment, which applies the same rule to
+       min/max and displayDate: the two public entry points into this package
+       must not read the same string as two different dates. */
+    const gregorian = UtilsService.parseGregorianDate(value);
+    if (gregorian) {
+      return gregorian;
     }
 
     const jalaliFormats = [

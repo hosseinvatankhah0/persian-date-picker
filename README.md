@@ -198,6 +198,13 @@ control.setValue('2026-06-12T08:30:00');       // .NET DateTime
 Which calendar a bare `YYYY-MM-DD` string belongs to is decided by its year: a
 four-digit year above 1500 is Gregorian, anything lower is read as Jalali.
 
+The same rule covers every date you hand the picker, not just the bound value —
+`minDate` / `maxDate`, `displayDate`, and the `min` / `max` in a `config` passed
+to the exported services underneath. So `min="2016-10-25"` means October 2016 in
+a `locale="fa"` picker rather than a Jalali year 2016 six centuries away. Text a
+user types into the box is not covered: that is read against the display format,
+where the calendar is already known.
+
 ### Setting `format` turns detection off
 
 Declaring a format says you already know the shape, so nothing is guessed and
