@@ -9,8 +9,10 @@
     }
 
     button:focus-visible {
-      outline: 2px solid @c-primary-solid !important;
+      outline: 2px solid fade(@c-primary-solid, 55%) !important;
       outline-offset: 2px;
+      box-shadow: 0 0 0 4px fade(@c-primary-solid, 12%);
+      transition: outline-color @transition-fast, box-shadow @transition-fast;
     }
 
     .dp-calendar-nav-container {

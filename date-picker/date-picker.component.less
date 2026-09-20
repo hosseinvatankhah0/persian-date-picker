@@ -19,7 +19,7 @@ dp-date-picker-modal .dp-dialog-heading {
     color: @c-text-muted;
     cursor: pointer;
     &:hover { background: @c-hover; }
-    &:focus-visible { outline: 2px solid @c-primary-solid; outline-offset: -2px; }
+    &:focus-visible { .dp-focus-ring-inset(); }
   }
 }
 
@@ -108,8 +108,7 @@ dp-date-picker-modal .dp-picker-actions {
     transition: background @transition-fast, opacity @transition-fast;
 
     &:focus-visible {
-      outline: 2px solid @c-primary-solid;
-      outline-offset: 1px;
+      .dp-focus-ring(1px);
     }
 
     &:disabled {
@@ -186,9 +185,13 @@ dp-date-picker-modal .dp-picker-actions {
           box-shadow: 0 0 0 1px fade(@c-primary-solid, 65%);
         }
 
+        /* Keyboard focus only: the quiet edge above plus a soft halo, so
+           tabbing into the field is easy to spot without the harsher ring
+           a mouse click doesn't need. */
         &:focus-visible {
-          outline: 2px solid @c-primary-solid;
+          outline: 1px solid fade(@c-primary-solid, 55%);
           outline-offset: 2px;
+          box-shadow: 0 0 0 1px fade(@c-primary-solid, 65%), 0 0 0 5px fade(@c-primary-solid, 12%);
         }
       }
     }
@@ -253,8 +256,7 @@ dp-date-picker-modal .dp-picker-actions {
   border-radius: @radius-sm;
 
   &:focus-visible {
-    outline: 2px solid @c-primary-solid;
-    outline-offset: 1px;
+    .dp-focus-ring(1px);
   }
 
   &.disabled {

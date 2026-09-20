@@ -59,6 +59,28 @@
 
 @transition-fast: 0.15s ease;
 
+// A softened focus treatment shared by every interactive control: a faded
+// (not full-strength) outline so the ring reads as a hint rather than a
+// hard frame, plus — where the control has room around it — a low-opacity
+// halo that echoes the .dp-current-day marker instead of a sharp second
+// line. Kept as a mixin rather than inlined everywhere so the two values
+// (ring color, halo softness) stay a single edit.
+.dp-focus-ring(@offset: 2px) {
+  outline: 2px solid fade(@c-primary-solid, 55%);
+  outline-offset: @offset;
+  box-shadow: 0 0 0 4px fade(@c-primary-solid, 12%);
+  transition: outline-color @transition-fast, box-shadow @transition-fast;
+}
+
+// For controls packed edge-to-edge in a grid (day/month/year chips), where
+// an outward halo would collide with the neighboring cell. The ring turns
+// inward instead of growing a glow.
+.dp-focus-ring-inset() {
+  outline: 2px solid fade(@c-primary-solid, 55%);
+  outline-offset: -2px;
+  transition: outline-color @transition-fast;
+}
+
 // Visually hides content while keeping it in the accessibility tree — used
 // for <label>s and hints that only screen readers need to announce.
 .sr-only() {
