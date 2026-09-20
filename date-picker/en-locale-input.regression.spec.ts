@@ -90,4 +90,14 @@ describe('typed input on the default fa-locale picker accepts unpadded Jalali da
     expect(component.selected().length).toBe(1);
     expect(component.selected()[0].clone().locale('fa').format('jYYYY/jMM/jDD')).toBe('1405/06/05');
   });
+
+  it('accepts an unpadded date+time typed for daytime mode, e.g. "1405/6/5 8:30:5"', () => {
+    const {component, fixture} = createFixture({format: 'jYYYY/jMM/jDD HH:mm:ss'});
+
+    component.onViewDateChange('1405/6/5 8:30:5');
+    fixture.detectChanges();
+
+    expect(component.selected().length).toBe(1);
+    expect(component.selected()[0].clone().locale('fa').format('jYYYY/jMM/jDD HH:mm:ss')).toBe('1405/06/05 08:30:05');
+  });
 });

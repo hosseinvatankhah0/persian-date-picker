@@ -88,4 +88,33 @@ describe('Gregorian detection is the same rule at every entry point', () => {
       expect(m.clone().locale('en').format('YYYY-MM-DD')).toBe('2026-06-12');
     });
   });
+
+  /**
+   * convertToMomentArray is the writeValue() path for every standalone
+   * calendar export (DayCalendarComponent, MonthCalendarComponent, etc. —
+   * see date-picker.component.ts:263, day-calendar.component.ts:214). It used
+   * to parse a string through the bare `moment(value, format, true)`
+   * constructor, which reads `format` against jalali-moment's *global*
+   * ambient locale rather than the `locale` argument actually passed in. On a
+   * page where something (this app, or another library sharing the same
+   * jalali-moment instance) has called the global `moment.locale('fa')`, a
+   * plain Gregorian bound value silently became a Jalali one — the exact bug
+   * this file's other cases pin for convertToMoment, just missed in this
+   * twin function.
+   */
+  describe('convertToMomentArray', () => {
+    afterEach(() => moment.locale('en'));
+
+    it('parses a Gregorian string against the given locale regardless of the ambient global one', () => {
+      moment.locale('fa');
+      const [m] = utils.convertToMomentArray('2016-10-25', 'YYYY-MM-DD', false, 'en');
+      expect(m.clone().locale('en').format('YYYY-MM-DD')).toBe('2016-10-25');
+    });
+
+    it('parses a Gregorian string array the same way', () => {
+      moment.locale('fa');
+      const [m] = utils.convertToMomentArray(['2016-10-25'], 'YYYY-MM-DD', true, 'en');
+      expect(m.clone().locale('en').format('YYYY-MM-DD')).toBe('2016-10-25');
+    });
+  });
 });

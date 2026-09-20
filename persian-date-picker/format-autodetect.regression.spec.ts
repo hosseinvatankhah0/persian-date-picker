@@ -86,6 +86,31 @@ describe('Explicit `format` input opts out of auto-detection', () => {
 
     expect(outputOf(picker)).toEqual(['2026-06-12', '2026-06-20']);
   });
+
+  /**
+   * The doc comment on parseToMoment's explicit-format branch says "ISO is
+   * allowed alongside a Gregorian format ... the shape is looser" — but the
+   * fallback only fired for a string containing a literal "T", so a plain
+   * ISO date (no time part, exactly what a server sends for a date-only
+   * field) or a .NET DateTimeOffset's numeric zone ("+03:30") fell through
+   * to null and got silently dropped instead of bound, contradicting that
+   * comment.
+   */
+  it('accepts a plain ISO date against a differently-shaped declared format', () => {
+    const picker = createPicker(injector, {format: 'DD-MM-YYYY'});
+    picker.writeValue('2026-06-12');
+
+    expect(picker.hasValue).toBe(true);
+    expect(outputOf(picker)).toBe('12-06-2026');
+  });
+
+  it('accepts an ISO datetime with a numeric UTC offset against a declared format', () => {
+    const picker = createPicker(injector, {format: 'DD-MM-YYYY'});
+    picker.writeValue('2026-06-12T08:30:00+03:30');
+
+    expect(picker.hasValue).toBe(true);
+    expect(outputOf(picker)).toBe('12-06-2026');
+  });
 });
 
 describe('Writing a value in normalizes the model itself, not just the display', () => {

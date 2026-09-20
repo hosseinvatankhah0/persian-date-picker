@@ -67,7 +67,10 @@ export class UtilsService {
     const formats = ['YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY/M/D', 'YYYY-M-D'];
     for (const separator of ['T', ' ']) {
       for (const fraction of ['', '.SSS']) {
-        for (const zone of ['', '[Z]']) {
+        // '' (no zone), '[Z]' (literal "Z" = UTC), 'Z'/'ZZ' (a numeric offset
+        // like "+03:30"/"+0330") — a .NET DateTimeOffset serializes with the
+        // latter, which the literal-only list here used to reject outright.
+        for (const zone of ['', '[Z]', 'Z', 'ZZ']) {
           formats.push(`YYYY-MM-DD${separator}HH:mm:ss${fraction}${zone}`);
         }
       }
@@ -162,13 +165,24 @@ export class UtilsService {
     return allowMultiSelect ? ECalendarValue.MomentArr : ECalendarValue.Moment;
   }
 
+  /**
+   * `moment(value, format, true)` — the bare constructor used here until this
+   * fix — reads `format` against jalali-moment's *global* ambient locale, not
+   * the `locale` this method was actually given: on a page where anything
+   * (this app or another library on it) has called the global
+   * `moment.locale('fa')`, a Gregorian `value` handed in with `locale: 'en'`
+   * (e.g. writeValue() on a directly-used DayCalendarComponent) was silently
+   * read as Jalali digits instead. `moment.from(value, loc, format)` parses
+   * against the given locale explicitly, the same fix already applied to
+   * convertToMoment above.
+   */
   convertToMomentArray(value: CalendarValue, format?: string, allowMultiSelect?: boolean, locale?: string): Moment[] {
     const loc = locale || 'fa';
     switch (this.getInputType(value, allowMultiSelect)) {
       case (ECalendarValue.String):
-        return value ? [moment(<string>value, format, true).locale(loc)] : [];
+        return value ? [moment.from(<string>value, loc, format)] : [];
       case (ECalendarValue.StringArr):
-        return (<string[]>value).map(v => v ? moment(v, format, true).locale(loc) : null).filter((v): v is Moment => Boolean(v));
+        return (<string[]>value).map(v => v ? moment.from(v, loc, format) : null).filter((v): v is Moment => Boolean(v));
       case (ECalendarValue.Moment):
         return value ? [(<Moment>value).clone().locale(loc)] : [];
       case (ECalendarValue.MomentArr):

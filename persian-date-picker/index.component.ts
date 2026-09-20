@@ -298,9 +298,14 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
       } catch {
         // Invalid years can throw inside jalali-moment.
       }
-      return /^\d{4}-\d{2}-\d{2}T/.test(value)
-        ? UtilsService.parseGregorianDate(value)
-        : null;
+      /* The declared format didn't match, but a server still hands this field
+         back in whatever shape .NET/ISO serialization produces regardless of
+         the display format the consumer declared — a bare date, a datetime,
+         or one with a numeric offset. parseGregorianDate already gates this
+         narrowly enough (a real leading year, an exact round-trip match) to
+         try unconditionally rather than pre-filtering on a "has a T" regex
+         that excluded the plain date-only shape. */
+      return UtilsService.parseGregorianDate(value);
     }
 
     /* Shared with UtilsService.convertToMoment, which applies the same rule to

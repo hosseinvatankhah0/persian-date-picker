@@ -575,11 +575,23 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
         // zero-padded formats and was silently rejected here, even though
         // writeValue()/PersianDatePickerComponent already accepted that same
         // shape for a bound value — typing it directly into the field was a
-        // dead end the model path wasn't.
+        // dead end the model path wasn't. The same gap applies with a time
+        // part attached (daytime mode's format) — jalali-moment round-trips
+        // 'jM'/'jD'/'H'/'m'/'s' exactly as reliably as their padded 'jMM' /
+        // 'HH' counterparts, so an unpadded "1405/6/5 8:30:5" deserves the
+        // same acceptance as "1405/06/05 08:30:05".
         const locale = config.locale || 'fa';
         const fallbackFormats = locale === 'fa'
-          ? [config.format || 'YYYY/MM/DD', 'jYYYY/jMM/jDD', 'jYYYY-jMM-jDD', 'jYYYYMMDD', 'jYYYY/jM/jD', 'jYYYY-jM-jD']
-          : [config.format || 'YYYY/MM/DD', 'YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY/M/D', 'YYYY-M-D'];
+          ? [
+            config.format || 'YYYY/MM/DD',
+            'jYYYY/jMM/jDD', 'jYYYY-jMM-jDD', 'jYYYYMMDD', 'jYYYY/jM/jD', 'jYYYY-jM-jD',
+            'jYYYY/jMM/jDD HH:mm:ss', 'jYYYY/jM/jD H:m:s', 'jYYYY-jMM-jDD HH:mm:ss', 'jYYYY-jM-jD H:m:s'
+          ]
+          : [
+            config.format || 'YYYY/MM/DD',
+            'YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY/M/D', 'YYYY-M-D',
+            'YYYY/MM/DD HH:mm:ss', 'YYYY/M/D H:m:s', 'YYYY-MM-DD HH:mm:ss', 'YYYY-M-D H:m:s'
+          ];
         for (const format of fallbackFormats) {
           try {
             const candidate = moment.from(raw, locale, format);
@@ -593,6 +605,19 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
         }
       }
       if (parsed?.isValid()) {
+        // This branch is the only one the real input ever reaches (its
+        // ngModel is always a string), so it is also the only place left to
+        // enforce minDate/maxDate on typed or pasted text — the legacy
+        // check further below now only runs for a non-string value, which
+        // nothing in the template ever sends.
+        if (this.mode() === 'day' && config.min && parsed.isBefore(config.min, 'day')) {
+          this.handleInvalidDate(true);
+          return;
+        }
+        if (this.mode() === 'day' && config.max && parsed.isAfter(config.max, 'day')) {
+          this.handleInvalidDate(false);
+          return;
+        }
         const selected = [parsed.locale(config.locale || 'fa')];
         this.selected.set(selected);
         this.updateInputElementValue(selected);
