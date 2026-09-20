@@ -92,11 +92,12 @@ interface IDemo {
     <summary>نمونه‌های پیشرفته و بررسی خروجی <span>برای توسعه‌دهندگان</span></summary>
     <section class="pg-card pg-inline">
       <h2>بازهٔ روز در منوی بازشونده</h2>
-      <p class="pg-hint">تقویم با کلیک روی ورودی، زیر همان فیلد باز می‌شود.</p>
+      <p class="pg-hint">اینجا باز شدن با کلیک روی ورودی صریحاً فعال شده است؛ تقویم زیر فیلد باز می‌شود.</p>
       <app-persian-date-picker
         [formControl]="inlineRange"
         mode="day"
         selectionMode="range"
+        [openOnClick]="true"
         pickerType="inline">
       </app-persian-date-picker>
       <pre class="pg-value">{{ format(inlineRange.value) }}</pre>
@@ -104,19 +105,60 @@ interface IDemo {
 
     <section class="pg-grid" style="margin-top:16px">
       <article class="pg-card">
-        <h2>آیکون تقویم فعال</h2>
-        <p class="pg-hint">
-          پیش‌فرض بدون آیکون است — کلیک/فوکوس روی خود اینپوت تقویم را باز می‌کند.
-          اینجا <code>showCalendarIcon</code> روشن است تا محل آیکون (راست) و دکمهٔ
-          پاک‌کردن (چپ) — که هیچ‌وقت روی هم نمی‌افتند — دیده شود.
-        </p>
+        <h2>رفتار پیش‌فرض: باز شدن فقط با آیکون</h2>
+        <p class="pg-hint">روی فیلد کلیک کنید و 1405/06/28 را تایپ یا پیست کنید؛ تقویم فقط با آیکون باز می‌شود.</p>
+        <app-persian-date-picker
+          [formControl]="iconOnlyDemo"
+          [showCalendarIcon]="true"
+          placeholder="تاریخ را تایپ کنید">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(iconOnlyDemo.value) }}</pre>
+      </article>
+
+      <article class="pg-card">
+        <h2>باز شدن با کلیک روی فیلد</h2>
+        <p class="pg-hint">فقط <code>openOnClick</code> روشن است؛ کلیک روی فیلد یا آیکون باید تقویم را باز کند.</p>
         <app-persian-date-picker
           [formControl]="iconDemo"
           mode="day"
-          [showCalendarIcon]="true"
+          [openOnClick]="true"
           placeholder="انتخاب کنید">
         </app-persian-date-picker>
         <pre class="pg-value">{{ format(iconDemo.value) }}</pre>
+      </article>
+
+      <article class="pg-card">
+        <h2>باز شدن با فوکوس</h2>
+        <p class="pg-hint">فقط <code>openOnFocus</code> روشن است؛ با Tab به فیلد بروید و باز شدن تقویم را بررسی کنید.</p>
+        <app-persian-date-picker
+          [formControl]="focusDemo"
+          [openOnFocus]="true"
+          placeholder="با Tab وارد شوید">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(focusDemo.value) }}</pre>
+      </article>
+
+      <article class="pg-card">
+        <h2>منوی بازشونده، فقط آیکون</h2>
+        <p class="pg-hint">در حالت <code>inline</code> هم کلیک و فوکوس فیلد باید بی‌اثر باشد و آیکون منو را باز کند.</p>
+        <app-persian-date-picker
+          [formControl]="inlineIconOnly"
+          pickerType="inline"
+          placeholder="تاریخ را تایپ کنید">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(inlineIconOnly.value) }}</pre>
+      </article>
+
+      <article class="pg-card">
+        <h2>فرمت‌های ورودی شمسی</h2>
+        <p class="pg-hint">هر دکمه یک مقدار را از طریق FormControl ست می‌کند؛ همه باید به <code>1405/02/02</code> برسند.</p>
+        <div class="pg-btn-row">
+          @for (sample of jalaliSamples; track sample) {
+            <button type="button" class="pg-btn" (click)="jalaliInput.setValue(sample)">{{ sample }}</button>
+          }
+        </div>
+        <app-persian-date-picker [formControl]="jalaliInput" placeholder="یا تاریخ را تایپ کنید"></app-persian-date-picker>
+        <pre class="pg-value">{{ format(jalaliInput.value) }}</pre>
       </article>
 
       <article class="pg-card" dir="ltr">
@@ -292,6 +334,10 @@ export class PlaygroundComponent {
 
   readonly inlineRange = new FormControl<string[] | null>(null);
   readonly iconDemo = new FormControl('');
+  readonly iconOnlyDemo = new FormControl('');
+  readonly focusDemo = new FormControl('');
+  readonly inlineIconOnly = new FormControl('');
+  readonly jalaliInput = new FormControl('');
   readonly ltrDemo = new FormControl('');
   readonly serverDemo = new FormControl('');
   readonly autoDetect = new FormControl('');
@@ -302,8 +348,11 @@ export class PlaygroundComponent {
     '2026/06/12',
     '2026-06-12',
     '2026-06-12T00:00:00.000Z',
-    '2026-06-12T08:30:00'
+    '2026-06-12T08:30:00',
+    '2026-06-12 08:30:00'
   ];
+
+  readonly jalaliSamples = ['14050202', '1405-02-02', '1405/02/02'];
 
   constructor() {
     this.dayRange.valueChanges.subscribe(() => this.rangeChanges.update(n => n + 1));

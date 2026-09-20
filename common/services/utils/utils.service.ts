@@ -51,8 +51,36 @@ export class UtilsService {
     if (!leadingYear || Number(leadingYear[1]) <= 1500) {
       return null;
     }
-    const parsed = moment(trimmed, [moment.ISO_8601, 'YYYY/MM/DD', 'YYYY-MM-DD']);
-    return parsed.isValid() ? parsed : null;
+    /* jalali-moment's moment() constructor routes parsing through its own
+       Jalali conversion internals whenever the library's *global* locale is
+       currently 'fa' - the default in most real usage of a Persian-first
+       library - regardless of the input actually being Gregorian-shaped.
+       For an implausible-but-numeric value (a typo'd year, a corrupted API
+       field) that throws outright rather than returning an invalid moment,
+       so a caller passing minDate/maxDate/displayDate would crash instead
+       of the value being rejected like any other bad input. */
+    const formats = ['YYYY/MM/DD', 'YYYY-MM-DD'];
+    for (const separator of ['T', ' ']) {
+      for (const fraction of ['', '.SSS']) {
+        for (const zone of ['', '[Z]']) {
+          formats.push(`YYYY-MM-DD${separator}HH:mm:ss${fraction}${zone}`);
+        }
+      }
+    }
+    for (const format of formats) {
+      try {
+        // moment(value, ...) follows jalali-moment's global locale. Parsing
+        // explicitly as English keeps Gregorian dates Gregorian even when
+        // another picker has switched that global locale to fa.
+        const parsed = moment.from(trimmed, 'en', format);
+        if (parsed.isValid() && parsed.clone().locale('en').format(format) === trimmed) {
+          return parsed;
+        }
+      } catch {
+        // An unsupported numeric year can throw inside jalali-moment.
+      }
+    }
+    return null;
   }
 
   createArray(size: number): number[] {

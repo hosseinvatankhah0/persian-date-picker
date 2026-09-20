@@ -153,6 +153,73 @@ describe('Writing a value in normalizes the model itself, not just the display',
   });
 });
 
+describe('Compact 8-digit Jalali input, and malformed-year safety', () => {
+  const injector = Injector.create({
+    providers: [{provide: ChangeDetectorRef, useValue: {markForCheck() {}}}]
+  });
+
+  it('keeps both modal and inline field triggers off by default', () => {
+    const picker = createPicker(injector);
+    picker.configure();
+    expect(picker.config.openOnClick).toBe(false);
+    expect(picker.config.openOnFocus).toBe(false);
+    expect(picker.inlineConfig.openOnClick).toBe(false);
+    expect(picker.inlineConfig.openOnFocus).toBe(false);
+  });
+
+  it('parses a compact separator-less Jalali date (jYYYYMMDD)', () => {
+    const picker = createPicker(injector);
+    picker.writeValue('14050202');
+
+    expect(outputOf(picker)).toBe('1405/02/02');
+  });
+
+  for (const value of ['1405-02-02', '1405/02/02',
+    '2026-04-22T00:00:00.000Z', '2026-04-22T00:00:00', '2026-04-22 00:00:00',
+    '2026-04-22T00:00:00Z', '2026-04-22 00:00:00Z', '2026-04-22 00:00:00.000']) {
+    it(`accepts ${value} as a bound value`, () => {
+      const picker = createPicker(injector);
+      picker.writeValue(value);
+      expect(outputOf(picker)).toBe('1405/02/02');
+    });
+  }
+
+  it('does not throw on a compact value with a year outside the Jalali calendar\'s range', () => {
+    // jalali-moment's own conversion throws for a year like this rather than
+    // returning an invalid moment - the exact failure mode that made a
+    // stray 8-digit paste able to crash the host app.
+    const picker = createPicker(injector);
+
+    expect(() => picker.writeValue('99999999')).not.toThrow();
+    expect(picker.hasValue).toBeFalsy();
+  });
+
+  it('rejects a compact value of the wrong length rather than misreading it', () => {
+    const picker = createPicker(injector);
+    picker.writeValue('140502');
+
+    expect(picker.hasValue).toBeFalsy();
+  });
+
+  it('does not cross-match a slash-separated value against the compact format', () => {
+    const picker = createPicker(injector);
+    picker.writeValue('1405/02/02');
+
+    expect(outputOf(picker)).toBe('1405/02/02');
+  });
+
+  it('does not throw when the interactive-typing path (onModelChange) gets 8 digits with an implausible year', () => {
+    // onModelChange's own digit-splitting path builds the moment with
+    // jYear()/jMonth()/jDate() directly rather than going through
+    // parseJalali - the same underlying jalali-moment throw applies there
+    // too, so it needs the same guard.
+    const picker = createPicker(injector);
+
+    expect(() => picker.onModelChange('99999999')).not.toThrow();
+    expect(picker.hasValue).toBeFalsy();
+  });
+});
+
 describe('`displayFormat` governs only the text box, independent of `format`', () => {
   const injector = Injector.create({
     providers: [{provide: ChangeDetectorRef, useValue: {markForCheck() {}}}]

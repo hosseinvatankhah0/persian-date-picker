@@ -7,7 +7,7 @@
     </label>
     <input
         (ngModelChange)="onViewDateChange($event)"
-        (focus)="componentConfig().disableKeypress ? inputFocused() : null"
+        (focus)="inputFocused()"
         (blur)="onTouchedCallback()"
         (keydown)="onInputKeydown($event)"
         [disabled]="disabled()"
@@ -15,7 +15,7 @@
         [placeholder]="placeholder()"
         [readonly]="componentConfig().disableKeypress"
         [attr.required]="required() ? '' : null"
-        [attr.dir]="componentConfig().locale === 'fa' ? 'rtl' : 'ltr'"
+        dir="ltr"
         aria-haspopup="dialog"
         [attr.aria-expanded]="isModalOpen()"
         [attr.aria-controls]="isModalOpen() ? inputId + '-dialog' : null"

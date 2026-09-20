@@ -93,9 +93,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   mode = input<CalendarMode>('day');
   placeholder = input<string>('');
   fontSize = input<number>(23);
-  /** Shown by default as a visible affordance that the input opens a picker;
-   * set to false to rely purely on focusing/clicking the input itself
-   * (openOnFocus/openOnClick already do that regardless of this flag). */
+  /** The default pointer trigger; field click/focus triggers are optional. */
   showCalendarIcon = input<boolean>(true);
   disabled = input<boolean>(false);
   displayDate = input<any>();
@@ -106,6 +104,12 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   maxTime = input<SingleCalendarValue>();
   required = input<boolean>(false);
   selectionMode = input<TSelectionMode>();
+  /** Undefined (the default) leaves DatePickerModalService's own default
+   * (false) in effect — set explicitly to override it, independent of
+   * `config`. The calendar icon (see showCalendarIcon) always opens the
+   * picker regardless of either flag; these only gate the input itself. */
+  openOnClick = input<boolean>();
+  openOnFocus = input<boolean>();
 
   @HostBinding('class') get themeClass() {
     return this.theme() || '';
@@ -155,7 +159,12 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     ...this.config(),
     min: this.minDate() || this.config()?.min,
     max: this.maxDate() || this.config()?.max,
-    selectionMode: this.selectionMode() || this.config()?.selectionMode
+    selectionMode: this.selectionMode() || this.config()?.selectionMode,
+    // ?? not || : an explicit false input must win over a truthy config
+    // value, and a truthy 0/'' would never occur here but false must not be
+    // read as "unset".
+    openOnClick: this.openOnClick() ?? this.config()?.openOnClick,
+    openOnFocus: this.openOnFocus() ?? this.config()?.openOnFocus
   }, this.mode()));
   isRangeMode = computed(() => this.componentConfig().selectionMode === 'range');
   /** When true, selection stays pending until the user hits confirm. */
@@ -542,6 +551,38 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
   onViewDateChange(value: CalendarValue) {
     const config = this.componentConfig();
+    if (typeof value === 'string') {
+      const raw = value.trim();
+      this.inputElementValue.set(value);
+      if (!raw) {
+        this.selected.set([]);
+        this.onChangeCallback('', true);
+        return;
+      }
+
+      let parsed = UtilsService.parseGregorianDate(raw);
+      if (!parsed) {
+        for (const format of [config.format || 'YYYY/MM/DD', 'jYYYY/jMM/jDD', 'jYYYY-jMM-jDD', 'jYYYYMMDD']) {
+          try {
+            const candidate = moment.from(raw, 'fa', format);
+            if (candidate.isValid() && candidate.clone().locale('fa').format(format) === raw) {
+              parsed = candidate;
+              break;
+            }
+          } catch {
+            // Leave invalid text visible so it can be corrected in place.
+          }
+        }
+      }
+      if (parsed?.isValid()) {
+        const selected = [parsed.locale(config.locale || 'fa')];
+        this.selected.set(selected);
+        this.updateInputElementValue(selected);
+        this.currentDateView.set(selected[0].clone());
+        this.onChangeCallback(selected[0], true);
+      }
+      return;
+    }
     let strVal = value ? this.utilsService.convertToString(value, config.format || 'YYYY-MM-DD', config.locale || 'fa') : '';
     strVal = strVal.replace(/[^0-9.]/g, '');
 

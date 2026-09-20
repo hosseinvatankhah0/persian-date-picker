@@ -168,6 +168,8 @@ dp-date-picker-modal .dp-picker-actions {
         border-radius: var(--dp-input-radius, @radius-sm);
         font-size: 13px;
         font-family: inherit;
+        direction: ltr;
+        text-align: center;
         color: @c-text;
         outline: none;
         background: @c-white;
@@ -177,14 +179,16 @@ dp-date-picker-modal .dp-picker-actions {
         &:hover:not(:disabled) { border-color: darken(@border-card-color, 15%); }
         &:disabled { background: @c-surface-muted; cursor: not-allowed; }
 
-        /* The ring is drawn by the shadow's own solid layer, not by tinting
-           the border, so it survives a host setting --dp-input-border: none —
-           otherwise removing the border would leave focus marked by a 15%
-           halo alone, far under the 3:1 WCAG 2.4.11 asks for. 2px because
-           that criterion wants a perimeter at least that thick. */
+        /* A single quiet edge marks focus without the large outer halo.
+           The shadow keeps the edge visible if a host removes the border. */
         &:focus {
           border-color: @c-primary-solid;
-          box-shadow: 0 0 0 2px @c-primary-solid, 0 0 0 5px fade(@c-primary-solid, 15%);
+          box-shadow: 0 0 0 1px fade(@c-primary-solid, 65%);
+        }
+
+        &:focus-visible {
+          outline: 2px solid @c-primary-solid;
+          outline-offset: 2px;
         }
       }
     }

@@ -8,6 +8,7 @@ import {
   HostBinding,
   inject,
   Input,
+  input,
   OnChanges,
   OnInit,
   Output,
@@ -101,9 +102,11 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
   @Output() inputModelChange = new EventEmitter<string>();
   @Input() pickerType: 'modal' | 'inline' = 'modal';
   @Input() fontSize = 23;
-  /** Shown by default as a visible affordance that the input opens a picker;
-   * set to false to rely purely on focusing/clicking the input itself. */
+  /** The default pointer trigger. If hidden, enable a field trigger explicitly. */
   @Input() showCalendarIcon = true;
+  /** Field triggers are off by default; the calendar icon remains available. */
+  readonly openOnClick = input(false);
+  readonly openOnFocus = input(false);
   /** 'range' turns the day/month calendar into a from-to picker. */
   @Input() selectionMode: TSelectionMode = 'single';
   /** Overrides the automatic confirm/close bar decision. */
@@ -287,8 +290,17 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
       if (this.isJalaliFormat(this.format)) {
         return this.parseJalali(value, this.format);
       }
-      const m = moment(value, [this.format, moment.ISO_8601], true);
-      return m.isValid() ? m : null;
+      try {
+        const declared = moment.from(value, 'en', this.format);
+        if (declared.isValid() && declared.clone().locale('en').format(this.format) === value) {
+          return declared;
+        }
+      } catch {
+        // Invalid years can throw inside jalali-moment.
+      }
+      return /^\d{4}-\d{2}-\d{2}T/.test(value)
+        ? UtilsService.parseGregorianDate(value)
+        : null;
     }
 
     /* Shared with UtilsService.convertToMoment, which applies the same rule to
@@ -305,6 +317,9 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
       'jYYYY-jMM-jDD',
       'jYYYY/jM/jD',
       'jYYYY-jM-jD',
+      // Compact, no separator - what an 8-digit typed-and-erased-separators
+      // value or a legacy integer-coded date column looks like.
+      'jYYYYMMDD',
     ];
 
     for (const fmt of jalaliFormats) {
@@ -314,18 +329,35 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
       }
     }
 
-    const g = moment(value, moment.ISO_8601, true);
-    return g.isValid() && g.year() > 1500 ? g : null;
+    // Same throw risk as parseJalali, reached from a different angle:
+    // jalali-moment's moment() constructor routes strict-ISO parsing through
+    // its own Jalali conversion internals whenever the library's *global*
+    // locale is currently 'fa' (set by any moment().locale('fa') call
+    // anywhere - this library's own or a host app's), regardless of the
+    // input's shape. An implausible-but-numeric string reaching this last
+    // fallback can trip the same "Invalid Jalali year" throw.
+    return null;
   }
 
   /**
    * `moment.from` is lenient to the point of uselessness as a validator -
    * it turns "not a date" into a valid moment in year 621 - so a parse only
    * counts if formatting it back produces exactly what came in.
+   *
+   * Also genuinely throws, rather than returning an invalid moment, for a
+   * numeric year far outside the Jalali calendar's supported range (its
+   * internal 33-year cycle table has a hard bound) - an 8-digit compact
+   * value with an implausible leading year is exactly the shape that can
+   * trigger this, so every caller here needs the try/catch, not just the
+   * new format.
    */
   private parseJalali(value: string, fmt: string): Moment | null {
-    const parsed = moment.from(value, 'fa', fmt);
-    return parsed.isValid() && parsed.locale('fa').format(fmt) === value ? parsed : null;
+    try {
+      const parsed = moment.from(value, 'fa', fmt);
+      return parsed.isValid() && parsed.locale('fa').format(fmt) === value ? parsed : null;
+    } catch {
+      return null;
+    }
   }
 
   /** The model's (ngModel/form) own format - independent of `locale`,
@@ -415,16 +447,19 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     if (this.showActionButtons !== undefined) {
       this.config.showActionButtons = this.showActionButtons;
     }
+    this.config.openOnClick = this.openOnClick();
+    this.config.openOnFocus = this.openOnFocus();
     /* "inline" means a small popup anchored under the input — same input,
        same as "modal" otherwise, just without the full-viewport backdrop.
        It is not a permanently-visible, input-less calendar widget: the
        input stays, and the calendar toggles open/closed exactly like the
-       modal variant does. */
+       modal variant does. It inherits openOnClick/openOnFocus from
+       `config` above (including the same false default) rather than forcing
+       them - the calendar icon is still always there as a way in even if a
+       host turns both off. */
     this.inlineConfig = {
       ...this.config,
       dropdown: true,
-      openOnClick: true,
-      openOnFocus: true,
     };
     this.cdr.markForCheck();
   }
@@ -462,17 +497,21 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
           this.dateObject = null;
         }
         if (split.length === 8) {
-          const m = moment();
           const str = split.toString();
           const month = +str.substring(4, 6) - 1;
           const day = +str.substring(6, 8);
-          m.jYear(+str.substring(0, 4));
-          m.jMonth(month);
-          m.jDate(day);
-          if (month < 0 || month > 11 || day < 1 || day > 31) {
+          // jYear() throws outright for a year outside the calendar's
+          // supported range (its internal cycle table has a hard bound),
+          // rather than producing an invalid moment - a plausible outcome
+          // for 8 stray digits, so this cannot be allowed to propagate.
+          try {
+            const m = moment();
+            m.jYear(+str.substring(0, 4));
+            m.jMonth(month);
+            m.jDate(day);
+            this.dateObject = (month < 0 || month > 11 || day < 1 || day > 31) ? null : m;
+          } catch {
             this.dateObject = null;
-          } else {
-            this.dateObject = m;
           }
         }
       }
