@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.1
+
+### Fixed
+
+- Fix a data-corruption bug where an `en`-locale picker could silently misread a typed date (e.g. `1405/06/05`) as Jalali digits instead of Gregorian, landing hundreds of years off with no error shown.
+- Accept unpadded Jalali dates (e.g. `1405/6/5`) typed directly into the field, matching what bound values already accepted.
+- Detect unpadded Gregorian dates (e.g. `2026-9-5`) the same way as their zero-padded form.
+
 ## 3.0.0
 
 ### Breaking change

@@ -59,7 +59,12 @@ export class UtilsService {
        field) that throws outright rather than returning an invalid moment,
        so a caller passing minDate/maxDate/displayDate would crash instead
        of the value being rejected like any other bad input. */
-    const formats = ['YYYY/MM/DD', 'YYYY-MM-DD'];
+    // The zero-padded forms first (so a padded input matches its own exact
+    // shape), then loose 'M'/'D' variants — without them, a perfectly
+    // ordinary unpadded date like "2026-9-5" failed every strict format,
+    // fell through to the Jalali fallback below, and got read as Jalali
+    // digits: hundreds of years off from the Gregorian date typed.
+    const formats = ['YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY/M/D', 'YYYY-M-D'];
     for (const separator of ['T', ' ']) {
       for (const fraction of ['', '.SSS']) {
         for (const zone of ['', '[Z]']) {

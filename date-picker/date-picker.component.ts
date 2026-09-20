@@ -562,10 +562,28 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
       let parsed = UtilsService.parseGregorianDate(raw);
       if (!parsed) {
-        for (const format of [config.format || 'YYYY/MM/DD', 'jYYYY/jMM/jDD', 'jYYYY-jMM-jDD', 'jYYYYMMDD']) {
+        // Jalali digits are only a sensible guess on a Jalali-locale picker.
+        // This used to try them against a hardcoded 'fa' unconditionally, so
+        // e.g. an 'en'-locale picker (min/max well below year 1500, or just
+        // an old date typed by hand) that read "1405/06/05" — meant as
+        // Gregorian year 1405 — silently became 2026-08-27 instead: the
+        // equality check below passed because it re-formatted with the same
+        // wrong locale it parsed with, so nothing caught the mismatch.
+        //
+        // The loose 'jM'/'jD' (and Gregorian 'M'/'D') variants matter too:
+        // without them an ordinary unpadded "1405/6/5" matched none of the
+        // zero-padded formats and was silently rejected here, even though
+        // writeValue()/PersianDatePickerComponent already accepted that same
+        // shape for a bound value — typing it directly into the field was a
+        // dead end the model path wasn't.
+        const locale = config.locale || 'fa';
+        const fallbackFormats = locale === 'fa'
+          ? [config.format || 'YYYY/MM/DD', 'jYYYY/jMM/jDD', 'jYYYY-jMM-jDD', 'jYYYYMMDD', 'jYYYY/jM/jD', 'jYYYY-jM-jD']
+          : [config.format || 'YYYY/MM/DD', 'YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY/M/D', 'YYYY-M-D'];
+        for (const format of fallbackFormats) {
           try {
-            const candidate = moment.from(raw, 'fa', format);
-            if (candidate.isValid() && candidate.clone().locale('fa').format(format) === raw) {
+            const candidate = moment.from(raw, locale, format);
+            if (candidate.isValid() && candidate.clone().locale(locale).format(format) === raw) {
               parsed = candidate;
               break;
             }
