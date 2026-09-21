@@ -415,9 +415,13 @@ export class UtilsService {
   }
 
   getValidMomentArray(value: string, format: string = 'YYYY-MM-DD', locale: string = 'fa'): Moment[] {
+    // `moment(d, format)` — the bare constructor used here until this fix —
+    // took a `locale` parameter and then ignored it for the actual parse,
+    // reading `format` against jalali-moment's ambient global locale instead
+    // (see moment.from below, and its doc comment on convertToMomentArray).
     return this.datesStringToStringArray(value)
       .filter(d => this.isDateValid(d, format, locale))
-      .map(d => moment(d, format));
+      .map(d => moment.from(d, locale, format));
   }
 
   shouldShowCurrent(showGoToCurrent?: boolean,

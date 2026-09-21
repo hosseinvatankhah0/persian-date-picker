@@ -1,9 +1,17 @@
 import {Component, computed, signal} from '@angular/core';
 import {FormControl, ReactiveFormsModule} from '@angular/forms';
+import moment from 'jalali-moment';
 import {PersianDatePickerComponent} from '../../../persian-date-picker/index.component';
 import {DayCalendarComponent} from '../../../day-calendar/day-calendar.component';
 import {IDayCalendarConfig} from '../../../day-calendar/day-calendar-config.model';
 import {ECalendarValue} from '../../../common/types/calendar-value-enum';
+
+// Mirrors the user's own `JDate.now.addDays(6).format('YYYY-MM-DD HH:mm:ss')`:
+// a jalali-moment instance locale'd to 'fa' formats jYear/jMonth/jDate through
+// the plain 'YYYY-MM-DD' tokens, so this string is a real Jalali date wearing
+// Gregorian-looking token names plus a trailing time the picker's default
+// 'YYYY-MM-DD' format doesn't include.
+const jDatePlus6Value = moment().locale('fa').add(6, 'days').format('YYYY-MM-DD HH:mm:ss');
 
 interface IDemo {
   title: string;
@@ -260,6 +268,111 @@ interface IDemo {
       </article>
     </section>
 
+    <section class="pg-grid" style="margin-top:16px">
+      <article class="pg-card">
+        <h2>حداقل/حداکثر تاریخ روی فیلد تایپی</h2>
+        <p class="pg-hint">
+          بازه مجاز ‎1405/01/01‎ تا ‎1405/12/29‎ است. داخل فیلد یک تاریخ خارج
+          از بازه (مثلاً <code>1300/01/01</code>) یا داخل بازه (مثلاً
+          <code>1405/06/15</code>) تایپ کنید — خارج از بازه باید رد شود و
+          پیام خطا نشان دهد.
+        </p>
+        <app-persian-date-picker
+          [formControl]="minMaxDemo"
+          mode="day"
+          [minDate]="'1405/01/01'"
+          [maxDate]="'1405/12/29'"
+          placeholder="بین 1405/01/01 و 1405/12/29">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(minMaxDemo.value) }}</pre>
+      </article>
+
+      <article class="pg-card">
+        <h2>تایپ بدون صفر پیشوند</h2>
+        <p class="pg-hint">
+          داخل فیلد <code>1405/6/5</code> (بدون صفر پیشوند ماه/روز) تایپ کنید
+          — باید همان‌طور که <code>1405/06/05</code> قبول می‌شود، پذیرفته شود.
+        </p>
+        <app-persian-date-picker
+          [formControl]="unpaddedDemo"
+          mode="day"
+          placeholder="مثلاً 1405/6/5">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(unpaddedDemo.value) }}</pre>
+      </article>
+
+      <article class="pg-card">
+        <h2>تایپ بدون صفر پیشوند + ساعت</h2>
+        <p class="pg-hint">
+          داخل فیلد <code>1405/6/5 8:30:5</code> تایپ کنید — تاریخ و ساعت هر
+          دو باید بدون صفر پیشوند پذیرفته شوند.
+        </p>
+        <app-persian-date-picker
+          [formControl]="unpaddedDaytimeDemo"
+          mode="daytime"
+          placeholder="مثلاً 1405/6/5 8:30:5">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(unpaddedDaytimeDemo.value) }}</pre>
+      </article>
+
+      <article class="pg-card" dir="ltr">
+        <h2>locale="en" — low-year Gregorian typed directly</h2>
+        <p class="pg-hint">
+          Type <code>1405/06/05</code> directly into the field — this picker
+          is Gregorian (<code>locale="en"</code>), so it must read as
+          Gregorian year 1405, not silently become 2026-08-27.
+        </p>
+        <app-persian-date-picker
+          [formControl]="enLowYearDemo"
+          mode="day"
+          locale="en"
+          placeholder="e.g. 1405/06/05">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(enLowYearDemo.value) }}</pre>
+      </article>
+
+      <article class="pg-card">
+        <h2>ISO ساده / با آفست، روی format سفارشی</h2>
+        <p class="pg-hint">
+          <code>format="DD-MM-YYYY"</code> ست شده. دکمه‌ها یک تاریخ ISO ساده
+          و یک تاریخ‌زمان ISO با آفست عددی (سبک .NET) را در فرم می‌گذارند —
+          هر دو باید پذیرفته و نمایش داده شوند، نه اینکه بی‌صدا حذف شوند.
+        </p>
+        <div class="pg-btn-row">
+          <button type="button" class="pg-btn" (click)="isoFormatDemo.setValue('2026-06-12')">
+            ISO ساده: 2026-06-12
+          </button>
+          <button type="button" class="pg-btn" (click)="isoFormatDemo.setValue('2026-06-12T08:30:00+03:30')">
+            با آفست: ...+03:30
+          </button>
+        </div>
+        <app-persian-date-picker
+          [formControl]="isoFormatDemo"
+          mode="day"
+          format="DD-MM-YYYY"
+          placeholder="تاریخ">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(isoFormatDemo.value) }}</pre>
+      </article>
+
+      <article class="pg-card">
+        <h2>مقدار اولیه فرم (JDate.now.addDays(6))</h2>
+        <p class="pg-hint">
+          کنترل این فیلد از همان ابتدا (نه با دکمه) با
+          <code>{{ jDatePlus6Value }}</code>
+          مقداردهی شده — همان چیزی که
+          <code>JDate.now.addDays(6).format('YYYY-MM-DD HH:mm:ss')</code>
+          تولید می‌کند. باید همین حالا تاریخ درست را نشان دهد.
+        </p>
+        <app-persian-date-picker
+          [formControl]="jDateInitialDemo"
+          mode="day"
+          placeholder="تاریخ">
+        </app-persian-date-picker>
+        <pre class="pg-value">{{ format(jDateInitialDemo.value) }}</pre>
+      </article>
+    </section>
+
     <p class="pg-note">تعداد رویدادهای onChange در حالت بازه: {{ rangeChanges() }}</p>
     </details>
     </main>
@@ -343,6 +456,13 @@ export class PlaygroundComponent {
   readonly autoDetect = new FormControl('');
   readonly explicitFormat = new FormControl('');
   readonly jalaliDashed = new FormControl('');
+  readonly minMaxDemo = new FormControl('');
+  readonly unpaddedDemo = new FormControl('');
+  readonly unpaddedDaytimeDemo = new FormControl('');
+  readonly enLowYearDemo = new FormControl('');
+  readonly isoFormatDemo = new FormControl('');
+  readonly jDatePlus6Value = jDatePlus6Value;
+  readonly jDateInitialDemo = new FormControl(jDatePlus6Value);
 
   readonly gregorianSamples = [
     '2026/06/12',

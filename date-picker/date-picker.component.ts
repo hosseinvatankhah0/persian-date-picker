@@ -668,13 +668,25 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     else this.showMaxDateIsNotValid.set(true);
   }
 
+  /**
+   * jalali-moment's own docs are explicit that the bare `moment(value)`
+   * constructor reads a string against whatever the library's *global*
+   * ambient locale currently is (see `moment.locale('fa', ...)` in its
+   * README) — `moment.from(value, locale, format)` is the documented way to
+   * parse against an explicit locale regardless of that ambient state. Both
+   * getters used the bare form on two different strings (the input's own
+   * text, and transformToJalali's re-serialized min/max), so either one
+   * could silently misparse on a page where something set the global locale
+   * to 'fa'.
+   */
   get minDateIsValid(): boolean {
     const inputVal = this.inputElementValue();
     const min = this.minDate();
     if (!inputVal || !min) return true;
 
-    const currentDate = moment(inputVal).locale('en');
-    const minMoment = moment(this.transformToJalali(min)).locale('en');
+    const config = this.componentConfig();
+    const currentDate = moment.from(inputVal, config.locale || 'fa', config.format || 'YYYY-MM-DD').locale('en');
+    const minMoment = moment.from(this.transformToJalali(min), 'fa', 'jYYYY/jMM/jDD').locale('en');
     return this.mode() !== 'day' || minMoment.isBefore(currentDate);
   }
 
@@ -683,8 +695,9 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     const max = this.maxDate();
     if (!inputVal || !max) return true;
 
-    const currentDate = moment(inputVal).locale('en');
-    const maxMoment = moment(this.transformToJalali(max)).locale('en');
+    const config = this.componentConfig();
+    const currentDate = moment.from(inputVal, config.locale || 'fa', config.format || 'YYYY-MM-DD').locale('en');
+    const maxMoment = moment.from(this.transformToJalali(max), 'fa', 'jYYYY/jMM/jDD').locale('en');
     return this.mode() !== 'day' || maxMoment.isAfter(currentDate);
   }
 
@@ -799,9 +812,20 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     return this.selected().length > 0;
   }
 
+  /**
+   * `value` is normally already a Moment (both current callers get it from
+   * minDate()/maxDate(), and PersianDatePickerComponent only ever hands this
+   * component an already-normalized Moment) — cloning one doesn't touch
+   * jalali-moment's ambient global locale, so that case is unaffected. A raw
+   * string is only possible from a bare `<dp-date-picker-modal>` used
+   * directly with `[minDate]`/`[maxDate]` bound to a plain string; for that
+   * case parseGregorianDate keeps a Gregorian-shaped string Gregorian
+   * regardless of the ambient locale, same as everywhere else it's used.
+   */
   transformToJalali(value: any, toFormat = 'jYYYY/jMM/jDD'): string {
     if (!value) return '';
-    return momentNs(value).format(toFormat);
+    const m = typeof value === 'string' ? UtilsService.parseGregorianDate(value) || momentNs(value) : momentNs(value);
+    return m.format(toFormat);
   }
 
   ngOnDestroy() {

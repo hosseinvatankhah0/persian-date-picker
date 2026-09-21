@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.2
+
+### Fixed
+
+- Fix `minDate`/`maxDate` enforcement on the typed-input field silently misreading the value on a page where anything (this library or a host app) had set jalali-moment's global locale to `fa` — the bare `moment()` constructor used to parse against that ambient state instead of the picker's own configured locale.
+- Fix a bound value carrying a trailing time-of-day (e.g. `1405-07-05 11:53:28`, what a host's own "N days from now" datetime helper commonly formats) being silently dropped instead of bound when the picker's mode is date-only (`day`/`month`) and no explicit `format` is set — the auto-detected Jalali fallback only tried date-only formats, so it never matched and the picker rendered empty.
+- Fix `getValidMomentArray` reading a typed date against jalali-moment's ambient global locale instead of the locale it was actually given, the same class of bug as above.
+
 ## 3.0.1
 
 ### Fixed

@@ -245,6 +245,37 @@ describe('Compact 8-digit Jalali input, and malformed-year safety', () => {
   });
 });
 
+describe('A Jalali value carrying a time-of-day on a date-only mode', () => {
+  const injector = Injector.create({
+    providers: [{provide: ChangeDetectorRef, useValue: {markForCheck() {}}}]
+  });
+
+  /**
+   * A host's own "N days from now" helper (built on jalali-moment the same
+   * way this library is) commonly formats with a trailing 'HH:mm:ss'
+   * regardless of what the bound picker actually needs — e.g.
+   * `JDate.now.addDays(6).format('YYYY-MM-DD HH:mm:ss')`. Before this fix,
+   * parseToMoment's Jalali fallback only tried date-only formats, so the
+   * strict round-trip check in parseJalali() never matched a string with a
+   * trailing time and the whole value was silently dropped instead of bound.
+   */
+  it('still binds when mode is day and the value has a trailing time', () => {
+    const picker = createPicker(injector);
+    picker.writeValue('1405-07-05 11:53:28');
+
+    expect(picker.hasValue).toBe(true);
+    expect(outputOf(picker)).toBe('1405/07/05');
+  });
+
+  it('also accepts the slash-separated form', () => {
+    const picker = createPicker(injector);
+    picker.writeValue('1405/07/05 11:53:28');
+
+    expect(picker.hasValue).toBe(true);
+    expect(outputOf(picker)).toBe('1405/07/05');
+  });
+});
+
 describe('`displayFormat` governs only the text box, independent of `format`', () => {
   const injector = Injector.create({
     providers: [{provide: ChangeDetectorRef, useValue: {markForCheck() {}}}]

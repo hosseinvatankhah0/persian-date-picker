@@ -1,3 +1,4 @@
+import {vi} from 'vitest';
 import moment from 'jalali-moment';
 import {UtilsService} from './services/utils/utils.service';
 import {DatePickerModalService} from '../date-picker/date-picker.service';
@@ -95,26 +96,34 @@ describe('Gregorian detection is the same rule at every entry point', () => {
    * see date-picker.component.ts:263, day-calendar.component.ts:214). It used
    * to parse a string through the bare `moment(value, format, true)`
    * constructor, which reads `format` against jalali-moment's *global*
-   * ambient locale rather than the `locale` argument actually passed in. On a
-   * page where something (this app, or another library sharing the same
-   * jalali-moment instance) has called the global `moment.locale('fa')`, a
-   * plain Gregorian bound value silently became a Jalali one — the exact bug
-   * this file's other cases pin for convertToMoment, just missed in this
-   * twin function.
+   * ambient locale rather than the `locale` argument actually passed in — the
+   * exact bug this file's other cases pin for convertToMoment, just missed
+   * in this twin function.
+   *
+   * These check that the fix (moment.from(value, locale, format)) is what
+   * actually runs, rather than reproducing the bug by mutating jalali-
+   * moment's real global locale: that global state is one shared module
+   * instance across every spec file in the suite, so a test that flips it
+   * (even with an afterEach reset) is a race against whatever else the
+   * runner executes concurrently — confirmed by this exact scenario
+   * corrupting an unrelated, unchanged test in persian-date-picker/locale-
+   * output.regression.spec.ts the first time it was tried.
    */
   describe('convertToMomentArray', () => {
-    afterEach(() => moment.locale('en'));
-
-    it('parses a Gregorian string against the given locale regardless of the ambient global one', () => {
-      moment.locale('fa');
+    it('parses a Gregorian string against the given locale, not moment\'s ambient one', () => {
+      const spy = vi.spyOn(moment, 'from');
       const [m] = utils.convertToMomentArray('2016-10-25', 'YYYY-MM-DD', false, 'en');
+      expect(spy).toHaveBeenCalledWith('2016-10-25', 'en', 'YYYY-MM-DD');
       expect(m.clone().locale('en').format('YYYY-MM-DD')).toBe('2016-10-25');
+      spy.mockRestore();
     });
 
     it('parses a Gregorian string array the same way', () => {
-      moment.locale('fa');
+      const spy = vi.spyOn(moment, 'from');
       const [m] = utils.convertToMomentArray(['2016-10-25'], 'YYYY-MM-DD', true, 'en');
+      expect(spy).toHaveBeenCalledWith('2016-10-25', 'en', 'YYYY-MM-DD');
       expect(m.clone().locale('en').format('YYYY-MM-DD')).toBe('2016-10-25');
+      spy.mockRestore();
     });
   });
 });
