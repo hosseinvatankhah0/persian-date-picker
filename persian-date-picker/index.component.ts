@@ -229,6 +229,10 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
     });
   }
 
+  private sameMomentArray(a: Moment[], b: Moment[]): boolean {
+    return a.length === b.length && a.every((m, i) => m.isSame(b[i]));
+  }
+
   private isSameModelValue(raw: any, normalized: string | string[]): boolean {
     if (Array.isArray(normalized)) {
       const rawParts: any[] = Array.isArray(raw)
@@ -498,10 +502,23 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
   onModelChange(e: any): void {
     if (this.isRange) {
       const values: any[] = Array.isArray(e) ? e : (e ? [e] : []);
-      this.rangeObject = values
+      const next = values
         .map(v => (moment.isMoment(v) ? v : this.normalizeToMoment(v)))
         .filter((v): v is Moment => !!v && v.isValid());
-      this.dateObject = this.rangeObject[0] || null;
+      // Only reassigned when the content actually differs, not on every call
+      // (an empty-string emit from the child, e.g. handleInvalidDate()
+      // clearing an out-of-range typed value, would otherwise still produce
+      // a brand-new `[]` reference here every time). `pickerValue` is bound
+      // through `[ngModel]="pickerValue"` on the child, which diffs by
+      // identity — a new reference on every call re-invokes the child's
+      // writeValue() right after it just showed a min/max error, and
+      // writeValue() resets that error's visibility as any genuinely new
+      // written-in value should. A stable reference here keeps that reset
+      // scoped to writes that actually change something.
+      if (!this.sameMomentArray(this.rangeObject, next)) {
+        this.rangeObject = next;
+        this.dateObject = this.rangeObject[0] || null;
+      }
       this.emitChanges();
       return;
     }

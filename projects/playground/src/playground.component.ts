@@ -63,7 +63,7 @@ interface IDemo {
           </div>
           <div class="calendar-legend"><span><i class="today-dot"></i> امروز</span><span><i class="selected-dot"></i> انتخاب شما</span><span>با کلیدهای جهت هم انتخاب کنید</span></div>
           <div class="selection-result" role="status" aria-live="polite">
-            <div><span>{{ previewMode() === 'range' ? 'بازهٔ انتخابی شما' : 'تاریخ انتخابی شما' }}</span><strong [class.empty]="!previewControl.value?.length">{{ previewLabel() }}</strong></div>
+            <div><span>{{ previewMode() === 'range' ? 'بازهٔ انتخابی شما' : 'تاریخ انتخابی شما' }}</span><strong [class.empty]="!previewControl.value?.length"><bdi>{{ previewLabel() }}</bdi></strong></div>
             <button type="button" class="reset-selection" [disabled]="!previewControl.value?.length" (click)="previewControl.reset()">پاک کردن</button>
           </div>
         </section>

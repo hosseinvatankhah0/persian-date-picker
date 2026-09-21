@@ -254,8 +254,21 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     );
   }
 
+  /**
+   * A stale min/max error from a previous typed keystroke (handleInvalidDate)
+   * must not survive a value written in through either writeValue() or
+   * onViewDateChange() — the clear ("X") button and any host-driven
+   * formControl.setValue() land in writeValue(), while a corrected keystroke
+   * lands in onViewDateChange(), so both call this before doing anything else.
+   */
+  private resetDateBoundsError(): void {
+    this.showMinDateIsNotValid.set(false);
+    this.showMaxDateIsNotValid.set(false);
+  }
+
   writeValue(value: CalendarValue): void {
     this.inputValue = value;
+    this.resetDateBoundsError();
     const config = this.componentConfig();
     this.inputValueType = this.utilsService.getInputType(value, !!config.allowMultiSelect);
 
@@ -551,6 +564,9 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
   onViewDateChange(value: CalendarValue) {
     const config = this.componentConfig();
+    // handleInvalidDate() below sets the right flag back to true if the new
+    // value is still out of range.
+    this.resetDateBoundsError();
     if (typeof value === 'string') {
       const raw = value.trim();
       this.inputElementValue.set(value);

@@ -197,8 +197,17 @@ dp-date-picker-modal .dp-picker-actions {
     }
 
     .dp-input-container {
-      position: relative;
       flex-direction: column;
+    }
+
+    /* Scoped to just the <input> + calendar-icon button, deliberately
+       excluding .date-error below — .datepicker-button centers itself
+       against *this* element's height (see below), and .date-error is a
+       normal-flow block sibling of this row (not a descendant of it) so it
+       can never inflate the height the button centers against, regardless
+       of whether an error is currently shown. */
+    .dp-input-row {
+      position: relative;
     }
 
     /* Scoped to the actual day/month chips: the range wrappers also carry
@@ -231,6 +240,12 @@ dp-date-picker-modal .dp-picker-actions {
   font-size: 12px;
   color: @c-danger;
   margin-top: 3px;
+  /* This text is always the hardcoded Persian message (date-picker.component.html)
+     regardless of `locale` — it sits inside <dp-date-picker-modal dir="ltr">
+     (set by the wrapper for the input's own digits), which it would otherwise
+     inherit, reading right-to-left content in a left-to-right paragraph. */
+  direction: rtl;
+  text-align: right;
 }
 
 .dp-sr-only {

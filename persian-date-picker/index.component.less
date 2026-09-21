@@ -33,8 +33,31 @@
   .remove-icon {
     position: absolute;
     left: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+    /* Vertically centered via the "inset + auto margin" technique instead of
+       `top: 50%` + `transform: translateY(-50%)` against `--dp-input-height`:
+       that would need `calc(var(--dp-input-height, 48px) / 2)` to find the
+       midpoint, and calc() cannot divide the keyword `auto` — the exact
+       value the README documents as a supported option for that property.
+       Fixed top/bottom insets plus `margin-block: auto` center a
+       definite-height box (24px, below) within whatever this wrapper's
+       rendered height turns out to be, with no arithmetic on that height at
+       all, so it's valid and correct for either `--dp-input-height` mode.
+
+       That "whatever this wrapper's rendered height turns out to be" is
+       still its *full* height, though, including the min/max error text
+       <dp-date-picker-modal> renders below its input (.date-error in
+       date-picker.component.less; kept in normal flow so page content after
+       the picker isn't overlapped) — so this button still re-centers lower,
+       against the grown height, while an error is shown. Unlike
+       date-picker.component.less's own calendar-icon button, which lives
+       inside <dp-date-picker-modal> and can be scoped to a wrapper around
+       just the input (.dp-input-row) excluding the error text, this button
+       is a sibling of the *whole* modal element one component up, with no
+       such narrower box available short of projecting it into that child
+       template. */
+    top: 0;
+    bottom: 0;
+    margin-block: auto;
     /* Reset browser button chrome now that this is a real <button>, not a <span>. */
     border: none;
     background: transparent;

@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.3
+
+### Fixed
+
+- Fix the calendar-icon button and the clear ("X") button drifting out of vertical alignment with the input once a min/max validation error rendered below it — both were centered against the whole growing input+error block instead of the input alone.
+- Fix the clear button's hover state stretching into an ellipse instead of a circle.
+- Fix the min/max error message inheriting the input's left-to-right direction and reading in the wrong order.
+- Fix the min/max error message staying visible after the value was cleared or replaced with a valid one — the flags that control it were only ever set, never reset.
+- Fix that same stale-error reset being silently swallowed in range mode, where an internal array-reference churn re-triggered `writeValue()` right after the error was set.
+
 ## 3.0.2
 
 ### Fixed

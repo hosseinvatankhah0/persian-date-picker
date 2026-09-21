@@ -2,52 +2,54 @@
   <div [attr.data-hidden]="componentConfig().hideInputContainer"
        [hidden]="componentConfig().hideInputContainer"
        class="dp-input-container">
-    <label class="dp-sr-only" [for]="inputId">
-      {{ placeholder() || dialogLabel() }}
-    </label>
-    <input
-        (ngModelChange)="onViewDateChange($event)"
-        (focus)="inputFocused()"
-        (blur)="onTouchedCallback()"
-        (keydown)="onInputKeydown($event)"
-        [disabled]="disabled()"
-        [ngModel]="inputElementValue()"
-        [placeholder]="placeholder()"
-        [readonly]="componentConfig().disableKeypress"
-        [attr.required]="required() ? '' : null"
-        dir="ltr"
-        aria-haspopup="dialog"
-        [attr.aria-expanded]="isModalOpen()"
-        [attr.aria-controls]="isModalOpen() ? inputId + '-dialog' : null"
-        [attr.aria-invalid]="showMinDateIsNotValid() || showMaxDateIsNotValid() ? 'true' : null"
-        autocomplete="off"
-        spellcheck="false"
-        class="dp-picker-input"
-        [id]="inputId"
-        type="text"/>
-    @if (showCalendarIcon()) {
-      <button #inputElementLabel
-              (click)="showCalendars()"
-              [attr.aria-label]="componentConfig().locale === 'fa' ? 'باز کردن تقویم' : 'Open calendar'"
-              [class.disabled]="disabled()"
-              [disabled]="disabled()"
-              aria-haspopup="dialog"
-              [attr.aria-expanded]="isModalOpen()"
-              [attr.aria-controls]="isModalOpen() ? inputId + '-dialog' : null"
-              class="datepicker-button"
-              type="button">
-        <svg class="datepicker-icon"
-             viewBox="0 0 24 24"
-             fill="none"
-             aria-hidden="true"
-             [style.width.px]="fontSize()"
-             [style.height.px]="fontSize()">
-          <rect x="3.5" y="5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
-          <path d="M3.5 9.5H20.5" stroke="currentColor" stroke-width="1.6"/>
-          <path d="M8 3V6.5M16 3V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-      </button>
-    }
+    <div class="dp-input-row">
+      <label class="dp-sr-only" [for]="inputId">
+        {{ placeholder() || dialogLabel() }}
+      </label>
+      <input
+          (ngModelChange)="onViewDateChange($event)"
+          (focus)="inputFocused()"
+          (blur)="onTouchedCallback()"
+          (keydown)="onInputKeydown($event)"
+          [disabled]="disabled()"
+          [ngModel]="inputElementValue()"
+          [placeholder]="placeholder()"
+          [readonly]="componentConfig().disableKeypress"
+          [attr.required]="required() ? '' : null"
+          dir="ltr"
+          aria-haspopup="dialog"
+          [attr.aria-expanded]="isModalOpen()"
+          [attr.aria-controls]="isModalOpen() ? inputId + '-dialog' : null"
+          [attr.aria-invalid]="showMinDateIsNotValid() || showMaxDateIsNotValid() ? 'true' : null"
+          autocomplete="off"
+          spellcheck="false"
+          class="dp-picker-input"
+          [id]="inputId"
+          type="text"/>
+      @if (showCalendarIcon()) {
+        <button #inputElementLabel
+                (click)="showCalendars()"
+                [attr.aria-label]="componentConfig().locale === 'fa' ? 'باز کردن تقویم' : 'Open calendar'"
+                [class.disabled]="disabled()"
+                [disabled]="disabled()"
+                aria-haspopup="dialog"
+                [attr.aria-expanded]="isModalOpen()"
+                [attr.aria-controls]="isModalOpen() ? inputId + '-dialog' : null"
+                class="datepicker-button"
+                type="button">
+          <svg class="datepicker-icon"
+               viewBox="0 0 24 24"
+               fill="none"
+               aria-hidden="true"
+               [style.width.px]="fontSize()"
+               [style.height.px]="fontSize()">
+            <rect x="3.5" y="5" width="17" height="16" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M3.5 9.5H20.5" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M8 3V6.5M16 3V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+      }
+    </div>
     @if (showMinDateIsNotValid()) {
       <div class="date-error" role="alert">تاریخ انتخابی نمی‌تواند از
         {{ transformToJalali(minDate()) }}
