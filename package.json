@@ -1,6 +1,6 @@
 {
   "name": "persian-date-picker-angular",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "Angular 22 Persian (Jalali/Shamsi) date picker with modal and dropdown calendars, date ranges, time selection, typed input, and reactive forms.",
   "keywords": [
     "angular",
