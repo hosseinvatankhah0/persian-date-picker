@@ -80,3 +80,119 @@ describe('typed input respects minDate/maxDate', () => {
     expect(component.showMaxDateIsNotValid()).toBe(false);
   });
 });
+
+/**
+ * minDateIsValid/maxDateIsValid used to re-parse transformToJalali()'s
+ * *formatted string* output with another `moment.from(...)` call — but
+ * `moment.from` is lenient enough that even the literal text "Invalid date"
+ * (transformToJalali's own output for an unparseable bound) parsed back into
+ * a fabricated "valid" moment in the year 621, instead of staying invalid.
+ * That silently made minDateIsValid permanently true (the min bound
+ * effectively disabled) and maxDateIsValid permanently false (every value
+ * rejected as "after max"), for as long as the bound itself was malformed.
+ */
+describe('minDateIsValid/maxDateIsValid fail open on a malformed bound rather than lying', () => {
+  let component: DatePickerModalComponent;
+  let fixture: ComponentFixture<DatePickerModalComponent>;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        CommonModule,
+        FormsModule,
+        DatePickerModalComponent,
+        DayTimeCalendarComponent,
+        DayCalendarComponent,
+        TimeSelectComponent,
+        CalendarNavComponent,
+        MonthCalendarComponent
+      ],
+      providers: [
+        DayTimeCalendarService,
+        DayCalendarService,
+        TimeSelectService,
+        UtilsService,
+        DomHelper
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(DatePickerModalComponent);
+    component = fixture.componentInstance;
+  });
+
+  // The fabricated year-621 moment the old bug produced for min happens to
+  // land "before" any real date anyway, so this assertion is `true` whether
+  // the bug is present or fixed — it documents the intended behavior, but
+  // the maxDateIsValid test below is the one that actually distinguishes
+  // the fix from the bug (year 621 is never "after" a real date either way,
+  // which used to make maxDateIsValid permanently false instead).
+  it('minDateIsValid stays true (no constraint enforced) rather than always false for a malformed minDate', () => {
+    fixture.componentRef.setInput('minDate', 'not a date');
+    (component as any).inputElementValue.set('1405/06/15');
+    fixture.detectChanges();
+
+    expect(component.minDateIsValid).toBe(true);
+  });
+
+  it('maxDateIsValid stays true (no constraint enforced) rather than always false for a malformed maxDate', () => {
+    fixture.componentRef.setInput('maxDate', 'not a date');
+    (component as any).inputElementValue.set('1405/06/15');
+    fixture.detectChanges();
+
+    expect(component.maxDateIsValid).toBe(true);
+  });
+});
+
+/**
+ * onViewDateChange's typed-input fallback used to only try matched date/time
+ * paddings together (padded date + padded time, or unpadded date + unpadded
+ * time) — a mixed-padding shape like a padded date with an unpadded time was
+ * silently rejected, even though the exact same shape was already accepted
+ * for a *bound* minDate/maxDate value via UtilsService.parseJalaliDate. Both
+ * now build their candidate list the same way (UtilsService.withTimeOfDay),
+ * so typing and binding accept the same shapes.
+ */
+describe('onViewDateChange accepts every date/time padding combination, not just matched pairs', () => {
+  let component: DatePickerModalComponent;
+  let fixture: ComponentFixture<DatePickerModalComponent>;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        CommonModule,
+        FormsModule,
+        DatePickerModalComponent,
+        DayTimeCalendarComponent,
+        DayCalendarComponent,
+        TimeSelectComponent,
+        CalendarNavComponent,
+        MonthCalendarComponent
+      ],
+      providers: [
+        DayTimeCalendarService,
+        DayCalendarService,
+        TimeSelectService,
+        UtilsService,
+        DomHelper
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(DatePickerModalComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('accepts a padded date typed with an unpadded time', () => {
+    component.onViewDateChange('1405/06/15 8:30:5');
+    fixture.detectChanges();
+
+    expect(component.selected().length).toBe(1);
+  });
+
+  it('accepts an unpadded date typed with a padded time', () => {
+    component.onViewDateChange('1405/6/15 08:30:05');
+    fixture.detectChanges();
+
+    expect(component.selected().length).toBe(1);
+  });
+});

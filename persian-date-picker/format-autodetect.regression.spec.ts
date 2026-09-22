@@ -274,6 +274,22 @@ describe('A Jalali value carrying a time-of-day on a date-only mode', () => {
     expect(picker.hasValue).toBe(true);
     expect(outputOf(picker)).toBe('1405/07/05');
   });
+
+  /**
+   * onViewDateChange's own typed-input fallback (date-picker.component.ts)
+   * explicitly accepts unpadded 'H:m:s' alongside padded 'HH:mm:ss' for a
+   * daytime value — jalali-moment round-trips both equally reliably. This
+   * mirrors that here for a *bound* value, which only had the padded variant
+   * and so silently dropped '1405/6/5 8:30:5' even though typing the exact
+   * same string into the field was already accepted.
+   */
+  it('accepts an unpadded date and time on a bound daytime value', () => {
+    const picker = createPicker(injector, {mode: 'daytime'});
+    picker.writeValue('1405/6/5 8:30:5');
+
+    expect(picker.hasValue).toBe(true);
+    expect(outputOf(picker)).toBe('1405/06/05 08:30:05');
+  });
 });
 
 describe('`displayFormat` governs only the text box, independent of `format`', () => {

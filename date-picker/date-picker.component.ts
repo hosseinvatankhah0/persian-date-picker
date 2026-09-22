@@ -596,29 +596,19 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
         // 'jM'/'jD'/'H'/'m'/'s' exactly as reliably as their padded 'jMM' /
         // 'HH' counterparts, so an unpadded "1405/6/5 8:30:5" deserves the
         // same acceptance as "1405/06/05 08:30:05".
-        const locale = config.locale || 'fa';
-        const fallbackFormats = locale === 'fa'
-          ? [
-            config.format || 'YYYY/MM/DD',
-            'jYYYY/jMM/jDD', 'jYYYY-jMM-jDD', 'jYYYYMMDD', 'jYYYY/jM/jD', 'jYYYY-jM-jD',
-            'jYYYY/jMM/jDD HH:mm:ss', 'jYYYY/jM/jD H:m:s', 'jYYYY-jMM-jDD HH:mm:ss', 'jYYYY-jM-jD H:m:s'
-          ]
-          : [
-            config.format || 'YYYY/MM/DD',
-            'YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY/M/D', 'YYYY-M-D',
-            'YYYY/MM/DD HH:mm:ss', 'YYYY/M/D H:m:s', 'YYYY-MM-DD HH:mm:ss', 'YYYY-M-D H:m:s'
-          ];
-        for (const format of fallbackFormats) {
-          try {
-            const candidate = moment.from(raw, locale, format);
-            if (candidate.isValid() && candidate.clone().locale(locale).format(format) === raw) {
-              parsed = candidate;
-              break;
-            }
-          } catch {
-            // Leave invalid text visible so it can be corrected in place.
-          }
-        }
+        const locale: 'en' | 'fa' = config.locale === 'en' ? 'en' : 'fa';
+        const dateFormats = locale === 'fa' ? UtilsService.JALALI_DATE_FORMATS : UtilsService.GREGORIAN_DATE_FORMATS;
+        const fallbackFormats = [
+          config.format || dateFormats[0],
+          ...UtilsService.withTimeOfDay(dateFormats),
+          ...(locale === 'fa' ? ['jYYYYMMDD'] : []),
+        ];
+        // Reuses the exact matching rule parseGregorianDate/parseJalaliDate
+        // use (round-trip equality, not just isValid()) so this fallback list
+        // can't silently drift out of parity with theirs the way it already
+        // had (it used to only try matched date/time paddings together,
+        // rejecting a legitimate "1405/01/01 8:30:5").
+        parsed = UtilsService.tryFormats(raw, locale, fallbackFormats);
       }
       if (parsed?.isValid()) {
         // This branch is the only one the real input ever reaches (its
@@ -690,10 +680,18 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
    * ambient locale currently is (see `moment.locale('fa', ...)` in its
    * README) — `moment.from(value, locale, format)` is the documented way to
    * parse against an explicit locale regardless of that ambient state. Both
-   * getters used the bare form on two different strings (the input's own
-   * text, and transformToJalali's re-serialized min/max), so either one
-   * could silently misparse on a page where something set the global locale
-   * to 'fa'.
+   * getters used the bare form on the input's own text, which could silently
+   * misparse on a page where something set the global locale to 'fa'.
+   *
+   * The bound itself goes through normalizeBound() directly rather than
+   * round-tripping through transformToJalali()'s *formatted string* and
+   * re-parsing that — `moment.from` is lenient enough that even the literal
+   * text "Invalid date" (transformToJalali's own output for an unparseable
+   * bound) parses back into a fabricated "valid" moment instead of staying
+   * invalid, which silently disabled minDateIsValid (permanently true) and
+   * bricked maxDateIsValid (permanently false) for every value typed against
+   * a malformed bound. Checking normalizeBound's own isValid() catches that
+   * directly, the same way `!min` already does for an *absent* bound.
    */
   get minDateIsValid(): boolean {
     const inputVal = this.inputElementValue();
@@ -702,7 +700,8 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
     const config = this.componentConfig();
     const currentDate = moment.from(inputVal, config.locale || 'fa', config.format || 'YYYY-MM-DD').locale('en');
-    const minMoment = moment.from(this.transformToJalali(min), 'fa', 'jYYYY/jMM/jDD').locale('en');
+    const minMoment = this.normalizeBound(min).locale('en');
+    if (!minMoment.isValid()) return true;
     return this.mode() !== 'day' || minMoment.isBefore(currentDate);
   }
 
@@ -713,7 +712,8 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
     const config = this.componentConfig();
     const currentDate = moment.from(inputVal, config.locale || 'fa', config.format || 'YYYY-MM-DD').locale('en');
-    const maxMoment = moment.from(this.transformToJalali(max), 'fa', 'jYYYY/jMM/jDD').locale('en');
+    const maxMoment = this.normalizeBound(max).locale('en');
+    if (!maxMoment.isValid()) return true;
     return this.mode() !== 'day' || maxMoment.isAfter(currentDate);
   }
 
@@ -833,15 +833,70 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
    * minDate()/maxDate(), and PersianDatePickerComponent only ever hands this
    * component an already-normalized Moment) — cloning one doesn't touch
    * jalali-moment's ambient global locale, so that case is unaffected. A raw
-   * string is only possible from a bare `<dp-date-picker-modal>` used
-   * directly with `[minDate]`/`[maxDate]` bound to a plain string; for that
-   * case parseGregorianDate keeps a Gregorian-shaped string Gregorian
-   * regardless of the ambient locale, same as everywhere else it's used.
+   * string is possible from a bare `<dp-date-picker-modal>` or the
+   * `dp-date-picker` directive used directly with `[minDate]`/`[maxDate]`
+   * bound to a plain string (both publicly exported) — parseGregorianDate
+   * keeps a Gregorian-shaped one Gregorian, parseJalaliDate keeps a
+   * Jalali-shaped one Jalali, both regardless of the ambient locale. This is
+   * the exact text the min/max error message renders through
+   * `{{ transformToJalali(minDate()) }}` (date-picker.component.html), so a
+   * misread here isn't just a comparison bug — it's a wrong date shown
+   * directly to the user in the error itself.
+   *
+   * Neither dedicated parser matching means `value` isn't Gregorian- or
+   * Jalali-date-shaped at all (a typo'd binding, a malformed API field) — an
+   * earlier version of this fallback still attempted a lenient `moment.from`
+   * parse at that point, but that call is lenient to the point of
+   * uselessness as a validator (it turned "not a date" into a "valid"
+   * moment on some fabricated real-looking date) and jalali-moment's own
+   * `moment.from`/`moment()` can throw outright for some malformed/
+   * implausible input instead of returning an invalid moment at all.
+   * `moment.invalid()` renders as "Invalid date" rather than crashing the
+   * template or fabricating a wrong-but-plausible date out of unrelated text.
+   *
+   * Delegates to normalizeBound() rather than inlining this itself, so
+   * minDateIsValid/maxDateIsValid can reuse the *actual Moment* (valid or
+   * not) instead of re-parsing this method's already-lossy formatted string
+   * output — see normalizeBound's own doc comment for why that round trip is
+   * unsafe.
    */
   transformToJalali(value: any, toFormat = 'jYYYY/jMM/jDD'): string {
     if (!value) return '';
-    const m = typeof value === 'string' ? UtilsService.parseGregorianDate(value) || momentNs(value) : momentNs(value);
-    return m.format(toFormat);
+    return this.normalizeBound(value).format(toFormat);
+  }
+
+  /**
+   * `value` is normally already a Moment (both current callers get it from
+   * minDate()/maxDate(), and PersianDatePickerComponent only ever hands this
+   * component an already-normalized Moment) — cloning one doesn't touch
+   * jalali-moment's ambient global locale, so that case is unaffected. A raw
+   * string is possible from a bare `<dp-date-picker-modal>` or the
+   * `dp-date-picker` directive used directly with `[minDate]`/`[maxDate]`
+   * bound to a plain string (both publicly exported).
+   *
+   * Returns the real Moment (or `moment.invalid()`) rather than a formatted
+   * string specifically so callers can check `.isValid()` themselves —
+   * `moment.from(formattedString, ...)` cannot be trusted to do that: it's
+   * lenient enough to parse even the literal text "Invalid date" into a
+   * fabricated "valid" moment instead of staying invalid (verified against
+   * this package's own jalali-moment version).
+   *
+   * A leading year at or below 1500 is genuinely ambiguous on its own — both
+   * calendars have real dates shaped that way — so parseGregorianDate gates
+   * on it and falls through to parseJalaliDate by default. But this picker's
+   * own configured locale already answers that question when it isn't the
+   * Jalali default: an 'en'-locale picker has no legitimate reason to accept
+   * a Jalali-calendar bound at all, so a historical Gregorian bound like
+   * "1499-06-15" must not be misread as Jalali just because it is old.
+   */
+  private normalizeBound(value: any): Moment {
+    if (typeof value !== 'string') {
+      return momentNs(value);
+    }
+    if ((this.componentConfig().locale || 'fa') !== 'fa') {
+      return UtilsService.parseGregorianDate(value, false) || moment.invalid();
+    }
+    return UtilsService.parseGregorianDate(value) || UtilsService.parseJalaliDate(value) || moment.invalid();
   }
 
   ngOnDestroy() {

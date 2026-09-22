@@ -36,52 +36,55 @@ export class UtilsService {
   }
 
   /**
-   * A leading four-digit year above 1500 can only be Gregorian — Jalali does
-   * not reach 1500 until the 22nd century, so nothing a caller realistically
-   * passes as a bound or a display date means a Jalali year up there. Returns
-   * null for anything not date-shaped, leaving the caller's own parsing to run.
-   *
-   * Static because PersianDatePickerComponent applies the same rule to the
-   * value bound through ngModel and does not inject this service; one copy of
-   * the rule is the point.
+   * The date-only format each calendar's parsers and fallbacks build on — the
+   * single source of truth so index.component.ts's jalaliFormats and
+   * date-picker.component.ts's onViewDateChange fallback can't silently drift
+   * out of parity with parseJalaliDate/parseGregorianDate the way they
+   * already have (twice: once for the compact no-separator shape, once for
+   * unpadded-time acceptance).
    */
-  static parseGregorianDate(value: string): Moment | null {
-    const trimmed = value.trim();
-    const leadingYear = /^(\d{4})[-/]\d{1,2}[-/]\d{1,2}/.exec(trimmed);
-    if (!leadingYear || Number(leadingYear[1]) <= 1500) {
-      return null;
-    }
-    /* jalali-moment's moment() constructor routes parsing through its own
-       Jalali conversion internals whenever the library's *global* locale is
-       currently 'fa' - the default in most real usage of a Persian-first
-       library - regardless of the input actually being Gregorian-shaped.
-       For an implausible-but-numeric value (a typo'd year, a corrupted API
-       field) that throws outright rather than returning an invalid moment,
-       so a caller passing minDate/maxDate/displayDate would crash instead
-       of the value being rejected like any other bad input. */
-    // The zero-padded forms first (so a padded input matches its own exact
-    // shape), then loose 'M'/'D' variants — without them, a perfectly
-    // ordinary unpadded date like "2026-9-5" failed every strict format,
-    // fell through to the Jalali fallback below, and got read as Jalali
-    // digits: hundreds of years off from the Gregorian date typed.
-    const formats = ['YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY/M/D', 'YYYY-M-D'];
-    for (const separator of ['T', ' ']) {
-      for (const fraction of ['', '.SSS']) {
-        // '' (no zone), '[Z]' (literal "Z" = UTC), 'Z'/'ZZ' (a numeric offset
-        // like "+03:30"/"+0330") — a .NET DateTimeOffset serializes with the
-        // latter, which the literal-only list here used to reject outright.
-        for (const zone of ['', '[Z]', 'Z', 'ZZ']) {
-          formats.push(`YYYY-MM-DD${separator}HH:mm:ss${fraction}${zone}`);
-        }
-      }
-    }
+  static readonly GREGORIAN_DATE_FORMATS = ['YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY/M/D', 'YYYY-M-D'];
+  static readonly JALALI_DATE_FORMATS = ['jYYYY/jMM/jDD', 'jYYYY-jMM-jDD', 'jYYYY/jM/jD', 'jYYYY-jM-jD'];
+
+  /**
+   * A shared host helper that always appends a time-of-day regardless of what
+   * the target picker actually needs (e.g. `JDate.now.format('YYYY-MM-DD
+   * HH:mm:ss')`) is a shape every date-only format list here needs to accept
+   * for a bound value — padded and unpadded time both, since jalali-moment
+   * round-trips 'H'/'m'/'s' exactly as reliably as 'HH'/'mm'/'ss'. Every
+   * *date* padding variant already in `dateFormats` gets both time paddings,
+   * not just its own matching one — a typed "1405/01/01 8:30:5" (padded date,
+   * unpadded time) is just as legitimate as "1405/1/1 08:30:05".
+   */
+  static withTimeOfDay(dateFormats: string[]): string[] {
+    return [
+      ...dateFormats,
+      ...dateFormats.map(fmt => `${fmt} HH:mm:ss`),
+      ...dateFormats.map(fmt => `${fmt} H:m:s`),
+    ];
+  }
+
+  /**
+   * Shared by parseGregorianDate/parseJalaliDate/onViewDateChange: try each
+   * candidate format against `trimmed`, explicitly against `locale` rather
+   * than jalali-moment's *global* one. `moment.from` is lenient to the point
+   * of uselessness as a validator on its own — it turns "not a date" into a
+   * valid moment on some unrelated date — so a parse only counts if
+   * formatting it back produces exactly what came in. Also genuinely throws,
+   * rather than returning an invalid moment, for a numeric year far outside
+   * the Jalali calendar's supported range (its internal 33-year cycle table
+   * has a hard bound), so every candidate needs the try/catch, not just the
+   * ones a caller expects to be implausible.
+   *
+   * Public (not just internal to this service) so onViewDateChange's typed-
+   * input fallback can reuse this exact matching rule too, instead of
+   * carrying its own copy that can drift out of sync with it.
+   */
+  static tryFormats(trimmed: string, locale: 'en' | 'fa', formats: string[]): Moment | null {
     for (const format of formats) {
       try {
-        // moment(value, ...) follows jalali-moment's global locale. Parsing
-        // explicitly as English keeps Gregorian dates Gregorian even when
-        // another picker has switched that global locale to fa.
-        const parsed = moment.from(trimmed, 'en', format);
-        if (parsed.isValid() && parsed.clone().locale('en').format(format) === trimmed) {
+        const parsed = moment.from(trimmed, locale, format);
+        if (parsed.isValid() && parsed.clone().locale(locale).format(format) === trimmed) {
           return parsed;
         }
       } catch {
@@ -89,6 +92,82 @@ export class UtilsService {
       }
     }
     return null;
+  }
+
+  /**
+   * A leading four-digit year above 1500 can only be Gregorian — Jalali does
+   * not reach 1500 until the 22nd century, so nothing a caller realistically
+   * passes as a bound or a display date means a Jalali year up there. Returns
+   * null for anything not date-shaped, leaving the caller's own parsing to run.
+   *
+   * `requireDistantYear` lets a caller that already knows the picker itself
+   * is Gregorian-locale (so a Jalali reading is never the right answer for
+   * it, regardless of the year) skip that guard — normalizeBound
+   * (date-picker.component.ts) uses this for an 'en'-locale picker's own
+   * minDate/maxDate, where a genuinely historical Gregorian bound like
+   * "1499-06-15" must not fall through to being misread as Jalali.
+   *
+   * Static because PersianDatePickerComponent applies the same rule to the
+   * value bound through ngModel and does not inject this service; one copy of
+   * the rule is the point.
+   */
+  static parseGregorianDate(value: string, requireDistantYear = true): Moment | null {
+    const trimmed = value.trim();
+    const leadingYear = /^(\d{4})[-/]\d{1,2}[-/]\d{1,2}/.exec(trimmed);
+    if (!leadingYear || (requireDistantYear && Number(leadingYear[1]) <= 1500)) {
+      return null;
+    }
+    // The zero-padded forms first (so a padded input matches its own exact
+    // shape), then loose 'M'/'D' variants — without them, a perfectly
+    // ordinary unpadded date like "2026-9-5" failed every strict format,
+    // fell through to the Jalali fallback below, and got read as Jalali
+    // digits: hundreds of years off from the Gregorian date typed.
+    const formats = [...UtilsService.GREGORIAN_DATE_FORMATS];
+    // Both date paddings ('YYYY-MM-DD' and 'YYYY-M-D') combine with both time
+    // paddings — a plain "2026-1-5 8:00:00" is just as real a shape as
+    // "2026-01-05T08:00:00Z", not only the exact-padding pairing either side
+    // happens to serialize with.
+    for (const dateFmt of ['YYYY-MM-DD', 'YYYY-M-D']) {
+      for (const timeFmt of ['HH:mm:ss', 'H:m:s']) {
+        for (const separator of ['T', ' ']) {
+          for (const fraction of ['', '.SSS']) {
+            // '' (no zone), '[Z]' (literal "Z" = UTC), 'Z'/'ZZ' (a numeric
+            // offset like "+03:30"/"+0330") — a .NET DateTimeOffset
+            // serializes with the latter, which the literal-only list here
+            // used to reject outright.
+            for (const zone of ['', '[Z]', 'Z', 'ZZ']) {
+              formats.push(`${dateFmt}${separator}${timeFmt}${fraction}${zone}`);
+            }
+          }
+        }
+      }
+    }
+    return UtilsService.tryFormats(trimmed, 'en', formats);
+  }
+
+  /**
+   * The Jalali-side counterpart to parseGregorianDate — parses a raw string
+   * explicitly against the 'fa' locale instead of jalali-moment's *global*
+   * one, which a bare `moment(value)` constructor would otherwise follow.
+   * That global locale defaults to 'en', so a Jalali-shaped bound value like
+   * `minDate="'1405/01/01'"` on a bare `<dp-date-picker-modal>` (no wrapping
+   * PersianDatePickerComponent to pre-normalize it to a Moment) got silently
+   * misread as a Gregorian-calendar date unless something elsewhere had
+   * already flipped that global locale to 'fa' — the same class of bug
+   * parseGregorianDate exists to prevent on the Gregorian side, and the same
+   * reason transformToJalali (date-picker.component.ts) needs this rather
+   * than its own bare `momentNs(value)` fallback.
+   */
+  static parseJalaliDate(value: string): Moment | null {
+    const trimmed = value.trim();
+    const formats = [
+      ...UtilsService.withTimeOfDay(UtilsService.JALALI_DATE_FORMATS),
+      // Compact, no separator - the same shape index.component.ts's own
+      // jalaliFormats and onViewDateChange's typed-input fallback both
+      // already accept, which this list had drifted out of parity with.
+      'jYYYYMMDD',
+    ];
+    return UtilsService.tryFormats(trimmed, 'fa', formats);
   }
 
   createArray(size: number): number[] {

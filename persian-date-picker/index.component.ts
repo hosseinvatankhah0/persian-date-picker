@@ -320,23 +320,25 @@ export class PersianDatePickerComponent implements ControlValueAccessor, OnInit,
       return gregorian;
     }
 
-    const jalaliDateFormats = [
-      'jYYYY/jMM/jDD',
-      'jYYYY-jMM-jDD',
-      'jYYYY/jM/jD',
-      'jYYYY-jM-jD',
-    ];
-
     const jalaliFormats = [
       this.defaultModelFormatByMode(),
-      ...jalaliDateFormats,
       // A caller bound to a date-only mode (day/month) can still receive a
       // value carrying a time-of-day - e.g. a host's own "now, N days from
       // here" helper that always formats with 'HH:mm:ss' regardless of what
       // the picker itself needs. The trailing time is accepted and simply
       // ignored by this mode's own format() calls rather than the whole
       // value being silently dropped for not round-tripping exactly.
-      ...jalaliDateFormats.map(fmt => `${fmt} HH:mm:ss`),
+      //
+      // Both padded ('HH:mm:ss') and unpadded ('H:m:s') variants matter here
+      // for the same reason onViewDateChange's own typed-input fallback
+      // carries both: jalali-moment round-trips 'H'/'m'/'s' exactly as
+      // reliably as their padded counterparts, so a bound value like
+      // '1405/6/5 8:30:5' deserves the same acceptance a typed one already
+      // gets, instead of being silently dropped for not matching either.
+      // Shared with UtilsService.parseJalaliDate/date-picker.component.ts's
+      // onViewDateChange fallback so this list can't drift out of parity
+      // with theirs again.
+      ...UtilsService.withTimeOfDay(UtilsService.JALALI_DATE_FORMATS),
       // Compact, no separator - what an 8-digit typed-and-erased-separators
       // value or a legacy integer-coded date column looks like.
       'jYYYYMMDD',
