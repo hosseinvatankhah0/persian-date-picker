@@ -28,7 +28,8 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "tsconfig.spec.json",
-            "buildTarget": "persian-date-picker:build"
+            "buildTarget": "persian-date-picker:build",
+            "isolate": true
           }
         }
       }

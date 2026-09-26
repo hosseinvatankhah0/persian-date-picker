@@ -135,6 +135,14 @@ Set `showActionButtons` on the component (or in `config`) to override this.
 | `npm run build:playground` | Production-builds the playground app. |
 | `npm run publish:lib` | Builds the library and publishes `dist/persian-date-picker` to npm. |
 
+The test target sets `isolate: true`. Angular's unit-test builder defaults it to
+`false` "to align with the Karma/Jasmine experience", which leaves every spec
+file sharing one module registry — and jalali-moment keeps its locale in a
+module-level global. One spec switching the ambient locale was enough to change
+what another spec saw mid-run, so date assertions failed in whichever file lost
+the race: roughly half of all runs went red, on a different handful of tests each
+time. Isolation costs about seven seconds and makes the suite deterministic.
+
 The root `package.json` is a dev workspace, not the published artifact — `ng-packagr`
 compiles the library into `dist/persian-date-picker` with its own generated
 `package.json` (scripts and devDependencies stripped). Always publish from there, e.g.
