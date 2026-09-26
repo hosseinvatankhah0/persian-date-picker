@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist/out-tsc",
-    "types": ["jasmine"],
+    "types": ["vitest/globals"],
     "lib": ["ES2022", "dom"]
   },
   "include": ["**/*.spec.ts", "**/*.d.ts"]
