@@ -43,8 +43,12 @@ export class UtilsService {
    * already have (twice: once for the compact no-separator shape, once for
    * unpadded-time acceptance).
    */
-  static readonly GREGORIAN_DATE_FORMATS = ['YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY/M/D', 'YYYY-M-D'];
+  static readonly GREGORIAN_DATE_FORMATS = [
+    'YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY/M/D', 'YYYY-M-D',
+    'YYYY/M/DD', 'YYYY-M-DD', 'YYYY/MM/D', 'YYYY-MM-D',
+  ];
   static readonly JALALI_DATE_FORMATS = ['jYYYY/jMM/jDD', 'jYYYY-jMM-jDD', 'jYYYY/jM/jD', 'jYYYY-jM-jD'];
+  static readonly GREGORIAN_INPUT_YEAR_THRESHOLD = 1500;
 
   /**
    * A shared host helper that always appends a time-of-day regardless of what
@@ -113,31 +117,20 @@ export class UtilsService {
    */
   static parseGregorianDate(value: string, requireDistantYear = true): Moment | null {
     const trimmed = value.trim();
-    const leadingYear = /^(\d{4})[-/]\d{1,2}[-/]\d{1,2}/.exec(trimmed);
-    if (!leadingYear || (requireDistantYear && Number(leadingYear[1]) <= 1500)) {
+    const dateParts = /^(\d{4})([-/])(\d{1,2})\2(\d{1,2})/.exec(trimmed);
+    if (!dateParts || (requireDistantYear && Number(dateParts[1]) <= UtilsService.GREGORIAN_INPUT_YEAR_THRESHOLD)) {
       return null;
     }
-    // The zero-padded forms first (so a padded input matches its own exact
-    // shape), then loose 'M'/'D' variants — without them, a perfectly
-    // ordinary unpadded date like "2026-9-5" failed every strict format,
-    // fell through to the Jalali fallback below, and got read as Jalali
-    // digits: hundreds of years off from the Gregorian date typed.
-    const formats = [...UtilsService.GREGORIAN_DATE_FORMATS];
-    // Both date paddings ('YYYY-MM-DD' and 'YYYY-M-D') combine with both time
-    // paddings — a plain "2026-1-5 8:00:00" is just as real a shape as
-    // "2026-01-05T08:00:00Z", not only the exact-padding pairing either side
-    // happens to serialize with.
-    for (const dateFmt of ['YYYY-MM-DD', 'YYYY-M-D']) {
-      for (const timeFmt of ['HH:mm:ss', 'H:m:s']) {
-        for (const separator of ['T', ' ']) {
-          for (const fraction of ['', '.SSS']) {
-            // '' (no zone), '[Z]' (literal "Z" = UTC), 'Z'/'ZZ' (a numeric
-            // offset like "+03:30"/"+0330") — a .NET DateTimeOffset
-            // serializes with the latter, which the literal-only list here
-            // used to reject outright.
-            for (const zone of ['', '[Z]', 'Z', 'ZZ']) {
-              formats.push(`${dateFmt}${separator}${timeFmt}${fraction}${zone}`);
-            }
+    const [, , dateSeparator, month, day] = dateParts;
+    // Match the month and day widths independently so each can round-trip exactly.
+    const dateFormat = ['YYYY', 'M'.repeat(month.length), 'D'.repeat(day.length)].join(dateSeparator);
+    const formats = [dateFormat];
+    for (const timeFormat of ['HH:mm:ss', 'H:m:s']) {
+      for (const separator of ['T', ' ']) {
+        for (const fraction of ['', '.SSS']) {
+          // Preserve ISO and .NET datetime forms with a UTC marker or numeric offset.
+          for (const zone of ['', '[Z]', 'Z', 'ZZ']) {
+            formats.push(`${dateFormat}${separator}${timeFormat}${fraction}${zone}`);
           }
         }
       }

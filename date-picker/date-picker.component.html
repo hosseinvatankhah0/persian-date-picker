@@ -6,10 +6,11 @@
       <label class="dp-sr-only" [for]="inputId">
         {{ placeholder() || dialogLabel() }}
       </label>
-      <input
-          (ngModelChange)="onViewDateChange($event)"
+      <input #dateInput
+          (beforeinput)="inputBeforeEdit($event)"
+          (ngModelChange)="inputValueChanged($event, dateInput)"
           (focus)="inputFocused()"
-          (blur)="onTouchedCallback()"
+          (blur)="inputBlurred()"
           (keydown)="onInputKeydown($event)"
           [disabled]="disabled()"
           [ngModel]="inputElementValue()"

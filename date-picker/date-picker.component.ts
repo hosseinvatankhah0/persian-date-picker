@@ -86,6 +86,7 @@ const moment = momentNs;
   ]
 })
 export class DatePickerModalComponent implements OnInit, ControlValueAccessor, Validator, OnDestroy {
+  private static readonly CLOCK_INPUT = /(^|[^\d:])(\d{1,2}):(\d{1,2}):(\d{1,2})(?=$|[^\d:])/;
   private static nextInputId = 0;
   readonly inputId = `dp-${DatePickerModalComponent.nextInputId++}`;
   // Inputs
@@ -144,6 +145,8 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
   /** Last value handed to the form; restored when the user closes without confirming. */
   private committedSelection: Moment[] = [];
+  private inputEdit?: InputEvent;
+  private pendingInputNormalization = false;
   /** Element focused before the dialog opened, so closing can hand focus back. */
   private lastFocusedElement: HTMLElement | null = null;
   private restoringFocus = false;
@@ -267,6 +270,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   }
 
   writeValue(value: CalendarValue): void {
+    this.pendingInputNormalization = false;
     this.inputValue = value;
     this.resetDateBoundsError();
     const config = this.componentConfig();
@@ -303,6 +307,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
   }
 
   updateInputElementValue(selected: Moment[]) {
+    this.pendingInputNormalization = false;
     const config = this.componentConfig();
     const parts = <string[]> this.utilsService.convertFromMomentArray(
       config.format || 'YYYY-MM-DD',
@@ -392,6 +397,168 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
     this.showCalendars();
   }
 
+  inputBeforeEdit(event: InputEvent) {
+    this.inputEdit = event;
+  }
+
+  inputValueChanged(value: string, input: HTMLInputElement) {
+    const caret = input.selectionStart ?? value.length;
+    const edit = this.inputEdit;
+    this.inputEdit = undefined;
+    // Deleting a separator can temporarily join two segments. Keep their digits available for editing.
+    if (edit?.inputType.startsWith('delete')) {
+      const clock = DatePickerModalComponent.CLOCK_INPUT.exec(value);
+      const editingClock = clock && caret >= clock.index + clock[1].length && caret <= clock.index + clock[0].length;
+      // Deleting either digit leaves the caret before or after the remaining digit.
+      this.onViewDateChange(value, editingClock ? [caret - 1, caret] : []);
+      return;
+    }
+
+    const insertingDigit = edit?.inputType === 'insertText' && /^[0-9۰-۹٠-٩]$/.test(edit.data ?? '');
+    const asciiValue = value.replace(/[۰-۹٠-٩]/g, digit => String('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩'.indexOf(digit) % 10));
+    const normalized = this.mode() === 'time'
+      ? {value: asciiValue, caret}
+      : this.normalizeDateInput(asciiValue, caret, insertingDigit);
+    if (normalized.value !== value) {
+      const previous = this.inputElementValue();
+      // Inserting into a full segment should leave its existing digits in place.
+      const extraDigit = insertingDigit && caret > 0 && normalized.value.length < asciiValue.length &&
+        asciiValue.slice(0, caret - 1) + asciiValue.slice(caret) === previous;
+      input.value = extraDigit ? previous : normalized.value;
+      const nextCaret = extraDigit ? caret - 1 : normalized.caret;
+      input.setSelectionRange(nextCaret, nextCaret);
+      if (input.value === previous) return;
+    }
+
+    if (normalized.awaitingMonth) {
+      this.resetDateBoundsError();
+      this.inputElementValue.set(normalized.value);
+      this.pendingInputNormalization = true;
+      return;
+    }
+
+    this.onViewDateChange(normalized.value, insertingDigit ? [normalized.caret - 1] : []);
+    // Angular skips a model-to-view write when this edit resolves to the same formatted value.
+    const displayed = this.inputElementValue();
+    if (input.value !== displayed) input.value = displayed;
+  }
+
+  private normalizeDateInput(value: string, caret: number, insertingDigit = false):
+    {value: string; caret: number; awaitingMonth?: boolean} {
+    const match = /^(\s*)(\d*)(?:([/.-])(\d*)(?:\3(\d*))?)?(?=$|[T\s])/.exec(value);
+    if (!match) return {value, caret};
+
+    const [prefix, leadingSpace, first, separator, second, third] = match;
+    const suffix = value.slice(prefix.length);
+    if (!separator && suffix.trim()) return {value, caret};
+
+    const parts = separator ? [first, second, ...(third === undefined ? [] : [third])] : [first];
+    const config = this.componentConfig();
+    // Keep a bracketed date-time separator out of the last date token.
+    const dateFormat = config.format?.split(/\[[ T]\]|[ T]/, 1)[0] ?? '';
+    const format = dateFormat === 'L'
+      ? moment.localeData(config.locale || 'fa').longDateFormat('L')
+      : dateFormat.replace(/\[([/.-])\]/g, '$1');
+    const compactTokens = format.match(/j?(?:YYYY|MM|DD)/g) ?? [];
+    const formatParts = separator ? format.split(separator) :
+      compactTokens.length === 3 && compactTokens.join('') === format ? compactTokens : [];
+    const configuredYear = formatParts.findIndex(part => /^j?Y{2,4}$/.test(part));
+    const configuredMonth = formatParts.findIndex(part => /^j?MM?$/.test(part));
+    const configuredDay = formatParts.findIndex(part => /^j?DD?$/.test(part));
+    const explicitJalali = formatParts.some(part => /^j[YMD]/.test(part));
+    // A leading year can belong to the standard fallback even with an overflowing day.
+    // Prefer the configured year position if it already contains a full year.
+    const configuredYearPresent = configuredYear > 0 && (parts[configuredYear]?.length ?? 0) >= 4;
+    const yearFirst = first.length >= 4 && third !== undefined && !configuredYearPresent;
+    const matchesConfiguredOrder = configuredYear >= 0 && (!yearFirst || configuredYear === 0);
+    // The parser's Gregorian year heuristic also applies before day validity is known.
+    const preferGregorian = third !== undefined && (separator === '/' || separator === '-') &&
+      (!matchesConfiguredOrder || configuredYear === 0) && first.length >= 4 &&
+      Number(first.slice(0, 4)) > UtilsService.GREGORIAN_INPUT_YEAR_THRESHOLD;
+    const acceptsOriginal = () => {
+      const raw = value.trim();
+      if (!preferGregorian) return !!this.parseInputDate(raw);
+      // A Gregorian overflow may be valid in the standard Jalali fallback.
+      // Only the configured alternate order can take precedence in this case.
+      return matchesConfiguredOrder && (configuredMonth !== 1 || configuredDay !== 2) &&
+        !!config.format && !!UtilsService.tryFormats(raw, config.locale === 'en' ? 'en' : 'fa', [config.format]);
+    };
+    const useConfiguredOrder = matchesConfiguredOrder && !preferGregorian;
+    const yearIndex = useConfiguredOrder ? configuredYear : 0;
+    const monthIndex = useConfiguredOrder ? configuredMonth : 1;
+    const dayIndex = useConfiguredOrder ? configuredDay : 2;
+    const gregorian = preferGregorian || (config.locale === 'en' && !(useConfiguredOrder && explicitJalali));
+
+    let offset = leadingSpace.length;
+    let removedBeforeCaret = 0;
+    const limited = parts.map((part, index) => {
+      const maxDigits = !separator ? 8 : index === yearIndex ? 4 : 2;
+      const kept = part.slice(0, maxDigits);
+      removedBeforeCaret += Math.max(0, Math.min(part.length, caret - offset) - kept.length);
+      offset += part.length + 1;
+      return kept;
+    });
+
+    if (separator) {
+      const originalDay = limited[dayIndex];
+      this.clampDateParts(limited, yearIndex, monthIndex, dayIndex, gregorian);
+      // A second month digit may change its capacity. Keep the original day until then.
+      if (insertingDigit && originalDay !== limited[dayIndex] && parts[monthIndex]?.length === 1 &&
+          caret === leadingSpace.length + parts.slice(0, monthIndex + 1).join(separator).length) {
+        if (acceptsOriginal()) return {value, caret};
+        return {value, caret, awaitingMonth: true};
+      }
+    } else if (limited[0].length === 8) {
+      const compact = limited[0];
+      let start = 0;
+      const date = [0, 1, 2].map(index => {
+        const end = start + (index === yearIndex ? 4 : 2);
+        const part = compact.slice(start, end);
+        start = end;
+        return part;
+      });
+      this.clampDateParts(date, yearIndex, monthIndex, dayIndex, gregorian);
+      limited[0] = date.join('');
+    }
+
+    const normalized = leadingSpace + limited.join(separator ?? '') + suffix;
+    // Clamping must not reinterpret dates already accepted in another input format.
+    if (normalized === value || acceptsOriginal()) return {value, caret};
+    return {value: normalized, caret: caret - removedBeforeCaret};
+  }
+
+  private clampDateParts(parts: string[], yearIndex: number, monthIndex: number, dayIndex: number, gregorian: boolean) {
+    const year = parts[yearIndex];
+    const enteredMonth = Number(parts[monthIndex]);
+    const month = Math.min(enteredMonth, 12);
+    if (month < enteredMonth) parts[monthIndex] = String(month);
+
+    const day = Number(parts[dayIndex]);
+    if (year?.length !== 4 || !month || !(day > 28)) return;
+
+    try {
+      const daysInMonth = gregorian
+        ? moment.utc([Number(year), month - 1, 1]).doAsGregorian().daysInMonth()
+        : moment.jDaysInMonth(Number(year), month - 1);
+      if (day > daysInMonth) parts[dayIndex] = String(daysInMonth);
+    } catch {
+      // The existing parser handles years outside jalali-moment's supported range.
+    }
+  }
+
+  inputBlurred() {
+    this.inputEdit = undefined;
+    this.commitPendingInput();
+    this.onTouchedCallback();
+  }
+
+  private commitPendingInput() {
+    if (this.pendingInputNormalization) {
+      const value = this.inputElementValue();
+      this.onViewDateChange(this.normalizeDateInput(value, value.length).value);
+    }
+  }
+
   onInputKeydown(event: KeyboardEvent) {
     if (event.key === 'ArrowDown' || event.key === 'Enter'
         || (event.key === ' ' && this.componentConfig().disableKeypress)) {
@@ -405,6 +572,7 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
   showCalendars() {
     if (this.disabled() || this.isModalOpen()) return;
+    this.commitPendingInput();
     this.committedSelection = this.selected().map(m => m.clone());
     const host = this.elemRef.nativeElement as HTMLElement;
     this.lastFocusedElement = host.contains(document.activeElement)
@@ -562,7 +730,33 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
       : formatted;
   }
 
-  onViewDateChange(value: CalendarValue) {
+  private parseInputDate(raw: string): Moment | null {
+    const gregorian = UtilsService.parseGregorianDate(raw);
+    if (gregorian) return gregorian;
+
+    const config = this.componentConfig();
+    const locale = config.locale === 'en' ? 'en' : 'fa';
+    const dateFormats = locale === 'fa' ? UtilsService.JALALI_DATE_FORMATS : UtilsService.GREGORIAN_DATE_FORMATS;
+    const format = config.format || dateFormats[0];
+    const formats = [
+      format,
+      ...UtilsService.withTimeOfDay(dateFormats),
+      ...(locale === 'fa' ? ['jYYYYMMDD'] : []),
+    ];
+    const parsed = UtilsService.tryFormats(raw, locale, formats);
+    const formatTokens = format.replace(/\[[^\]]*\]|\\./g, ' ');
+    if (parsed || !/(?:HH|hh):mm:ss/.test(formatTokens)) return parsed;
+
+    // Each clock segment can be pasted independently, with or without its leading zero.
+    const padded = raw.replace(DatePickerModalComponent.CLOCK_INPUT,
+      (_, prefix: string, hours: string, minutes: string, seconds: string) =>
+        prefix + [hours, minutes, seconds].map(part => part.padStart(2, '0')).join(':'));
+    return padded === raw ? null :
+      UtilsService.parseGregorianDate(padded) || UtilsService.tryFormats(padded, locale, formats);
+  }
+
+  onViewDateChange(value: CalendarValue, paddingIndexes: readonly number[] = []) {
+    this.pendingInputNormalization = false;
     const config = this.componentConfig();
     // handleInvalidDate() below sets the right flag back to true if the new
     // value is still out of range.
@@ -576,41 +770,18 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
         return;
       }
 
-      let parsed = UtilsService.parseGregorianDate(raw);
-      if (!parsed) {
-        // Jalali digits are only a sensible guess on a Jalali-locale picker.
-        // This used to try them against a hardcoded 'fa' unconditionally, so
-        // e.g. an 'en'-locale picker (min/max well below year 1500, or just
-        // an old date typed by hand) that read "1405/06/05" — meant as
-        // Gregorian year 1405 — silently became 2026-08-27 instead: the
-        // equality check below passed because it re-formatted with the same
-        // wrong locale it parsed with, so nothing caught the mismatch.
-        //
-        // The loose 'jM'/'jD' (and Gregorian 'M'/'D') variants matter too:
-        // without them an ordinary unpadded "1405/6/5" matched none of the
-        // zero-padded formats and was silently rejected here, even though
-        // writeValue()/PersianDatePickerComponent already accepted that same
-        // shape for a bound value — typing it directly into the field was a
-        // dead end the model path wasn't. The same gap applies with a time
-        // part attached (daytime mode's format) — jalali-moment round-trips
-        // 'jM'/'jD'/'H'/'m'/'s' exactly as reliably as their padded 'jMM' /
-        // 'HH' counterparts, so an unpadded "1405/6/5 8:30:5" deserves the
-        // same acceptance as "1405/06/05 08:30:05".
-        const locale: 'en' | 'fa' = config.locale === 'en' ? 'en' : 'fa';
-        const dateFormats = locale === 'fa' ? UtilsService.JALALI_DATE_FORMATS : UtilsService.GREGORIAN_DATE_FORMATS;
-        const fallbackFormats = [
-          config.format || dateFormats[0],
-          ...UtilsService.withTimeOfDay(dateFormats),
-          ...(locale === 'fa' ? ['jYYYYMMDD'] : []),
-        ];
-        // Reuses the exact matching rule parseGregorianDate/parseJalaliDate
-        // use (round-trip equality, not just isValid()) so this fallback list
-        // can't silently drift out of parity with theirs the way it already
-        // had (it used to only try matched date/time paddings together,
-        // rejecting a legitimate "1405/01/01 8:30:5").
-        parsed = UtilsService.tryFormats(raw, locale, fallbackFormats);
-      }
+      const parsed = this.parseInputDate(raw);
       if (parsed?.isValid()) {
+        const date = parsed.locale(config.locale || 'fa');
+        const formatted = date.format(config.format || 'YYYY-MM-DD');
+        // A lone digit at the caret may be part of an edit to a padded segment.
+        // Writing the formatted value now would move the caret and commit the partial date.
+        if (paddingIndexes.some(index => index >= 0 &&
+            formatted === value.slice(0, index) + '0' + value.slice(index))) {
+          this.pendingInputNormalization = true;
+          return;
+        }
+
         // This branch is the only one the real input ever reaches (its
         // ngModel is always a string), so it is also the only place left to
         // enforce minDate/maxDate on typed or pasted text — the legacy
@@ -624,11 +795,11 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
           this.handleInvalidDate(false);
           return;
         }
-        const selected = [parsed.locale(config.locale || 'fa')];
+        const selected = [date];
         this.selected.set(selected);
-        this.updateInputElementValue(selected);
-        this.currentDateView.set(selected[0].clone());
-        this.onChangeCallback(selected[0], true);
+        this.inputElementValue.set(formatted);
+        this.currentDateView.set(date.clone());
+        this.onChangeCallback(date, true);
       }
       return;
     }
