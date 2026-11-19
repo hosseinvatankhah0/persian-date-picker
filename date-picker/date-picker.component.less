@@ -200,14 +200,10 @@ dp-date-picker-modal .dp-picker-actions {
       flex-direction: column;
     }
 
-    /* Scoped to just the <input> + calendar-icon button, deliberately
-       excluding .date-error below — .datepicker-button centers itself
-       against *this* element's height (see below), and .date-error is a
-       normal-flow block sibling of this row (not a descendant of it) so it
-       can never inflate the height the button centers against, regardless
-       of whether an error is currently shown. */
+    /* Keep both input buttons centered on the input while errors flow below. */
     .dp-input-row {
       position: relative;
+      display: flex;
     }
 
     /* Scoped to the actual day/month chips: the range wrappers also carry

@@ -1,6 +1,6 @@
 # Persian Date Picker for Angular
 
-A standalone Angular 22 date picker for the Persian (Jalali/Shamsi) calendar: day, month, time and date-time selection, date ranges, keyboard access, and Reactive Forms. تقویم شمسی با امکان انتخاب تاریخ و ساعت.
+A standalone date picker for the Persian (Jalali/Shamsi) calendar: day, month, time and date-time selection, date ranges, keyboard access, and Reactive Forms. تقویم شمسی با امکان انتخاب تاریخ و ساعت.
 
 [npm package](https://www.npmjs.com/package/persian-date-picker-angular) · [Source and issues](https://github.com/hosseinvatankhah0/persian-date-picker)
 
@@ -18,10 +18,10 @@ A standalone Angular 22 date picker for the Persian (Jalali/Shamsi) calendar: da
 
 ## Quick start
 
-Use this package in an Angular 22 application. Install the picker and its Jalali and CDK peers:
+Use this package with Angular 19 through 22. Install the picker and its Jalali peer.
 
 ```bash
-npm install persian-date-picker-angular jalali-moment @angular/cdk
+npm install persian-date-picker-angular jalali-moment
 ```
 
 ```typescript

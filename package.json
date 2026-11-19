@@ -1,7 +1,7 @@
 {
   "name": "persian-date-picker-angular",
-  "version": "3.0.6",
-  "description": "Angular 22 Persian (Jalali/Shamsi) date picker with modal and dropdown calendars, date ranges, time selection, typed input, and reactive forms.",
+  "version": "3.0.7",
+  "description": "Angular Persian (Jalali/Shamsi) date picker with modal and dropdown calendars, date ranges, time selection, typed input, and reactive forms.",
   "keywords": [
     "angular",
     "angular22",
@@ -62,10 +62,9 @@
     "vitest": "^4.1.11"
   },
   "peerDependencies": {
-    "@angular/cdk": "^22.0.0",
-    "@angular/common": "^22.0.0",
-    "@angular/core": "^22.0.0",
-    "@angular/forms": "^22.0.0",
+    "@angular/common": ">=19.0.0 <23.0.0",
+    "@angular/core": ">=19.0.0 <23.0.0",
+    "@angular/forms": ">=19.0.0 <23.0.0",
     "jalali-moment": "^3.3.11",
     "rxjs": "~7.8.0"
   }

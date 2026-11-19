@@ -21,19 +21,9 @@
         class="custom-date-picker"
         dir="ltr"
         theme="dp-default">
-   </dp-date-picker-modal>
-    <button *ngIf="hasValue"
-        type="button"
-        class="remove-icon"
-        [attr.aria-label]="locale === 'fa' ? 'پاک کردن تاریخ' : 'Clear date'"
-        [class.disabled]="disabled"
-        [disabled]="disabled"
-        (click)="clearDate($event)">
-      <svg class="remove-icon-glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M5 5L19 19M19 5L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-   </button>
- </ng-container>
+      <ng-container dp-input-action [ngTemplateOutlet]="clearButton"></ng-container>
+    </dp-date-picker-modal>
+  </ng-container>
 
   <ng-container *ngIf="pickerType === 'inline'">
     <dp-date-picker-modal
@@ -57,17 +47,21 @@
         class="custom-date-picker inline-picker"
         dir="ltr"
         theme="dp-default">
-   </dp-date-picker-modal>
+      <ng-container dp-input-action [ngTemplateOutlet]="clearButton"></ng-container>
+    </dp-date-picker-modal>
+  </ng-container>
+
+  <ng-template #clearButton>
     <button *ngIf="hasValue"
-        type="button"
-        class="remove-icon"
-        [attr.aria-label]="locale === 'fa' ? 'پاک کردن تاریخ' : 'Clear date'"
-        [class.disabled]="disabled"
-        [disabled]="disabled"
-        (click)="clearDate($event)">
+            type="button"
+            class="remove-icon"
+            [attr.aria-label]="locale === 'fa' ? 'پاک کردن تاریخ' : 'Clear date'"
+            [class.disabled]="disabled"
+            [disabled]="disabled"
+            (click)="clearDate($event)">
       <svg class="remove-icon-glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M5 5L19 19M19 5L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
-   </button>
- </ng-container>
+    </button>
+  </ng-template>
 </div>

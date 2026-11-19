@@ -51,6 +51,7 @@
           </svg>
         </button>
       }
+      <ng-content select="[dp-input-action]"></ng-content>
     </div>
     @if (showMinDateIsNotValid()) {
       <div class="date-error" role="alert">تاریخ انتخابی نمی‌تواند از
