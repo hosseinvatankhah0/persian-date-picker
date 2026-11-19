@@ -93,6 +93,59 @@ describe('openOnClick / openOnFocus', () => {
     });
   });
 
+  describe.each([
+    {picker: 'modal', dropdown: false},
+    {picker: 'inline', dropdown: true},
+  ])('$picker pointer and keyboard triggers', ({dropdown}) => {
+    const triggerOptions = [
+      {openOnClick: false, openOnFocus: false},
+      {openOnClick: true, openOnFocus: false},
+      {openOnClick: false, openOnFocus: true},
+      {openOnClick: true, openOnFocus: true},
+    ];
+
+    function configure(options: {openOnClick: boolean; openOnFocus: boolean}) {
+      fixture.componentRef.setInput('config', {dropdown});
+      fixture.componentRef.setInput('openOnClick', options.openOnClick);
+      fixture.componentRef.setInput('openOnFocus', options.openOnFocus);
+      fixture.detectChanges();
+    }
+
+    it.each(triggerOptions)('handles the first pointer click with $openOnClick / $openOnFocus', options => {
+      configure(options);
+      const field = input();
+      const pointerDown = new PointerEvent('pointerdown', {bubbles: true, cancelable: true, button: 0, isPrimary: true});
+      if (field.dispatchEvent(pointerDown)) field.focus();
+      fixture.detectChanges();
+
+      // A modal opened by pointer focus can intercept the release on its backdrop.
+      const clickTarget = !dropdown && component.isModalOpen()
+        ? fixture.nativeElement.querySelector('[role="dialog"]')
+        : field;
+      clickTarget.dispatchEvent(new MouseEvent('click', {bubbles: true, detail: 1}));
+
+      expect(component.isModalOpen()).toBe(options.openOnClick || options.openOnFocus);
+    });
+
+    it.each(triggerOptions)('handles keyboard focus with $openOnClick / $openOnFocus', options => {
+      configure(options);
+
+      input().focus();
+
+      expect(component.isModalOpen()).toBe(options.openOnFocus);
+    });
+
+    it('leaves a disabled field closed with both triggers enabled', () => {
+      fixture.componentRef.setInput('disabled', true);
+      configure({openOnClick: true, openOnFocus: true});
+
+      input().focus();
+      input().click();
+
+      expect(component.isModalOpen()).toBe(false);
+    });
+  });
+
   describe('openOnClick=false, openOnFocus=false', () => {
     beforeEach(() => {
       fixture.componentRef.setInput('openOnClick', false);

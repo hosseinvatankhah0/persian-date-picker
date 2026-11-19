@@ -372,7 +372,12 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
 
       if (!isDialogContainer && !isInputOrLabel && !isButton) {
         if (target.tagName === 'INPUT') {
-          if (this.componentConfig().openOnClick) this.showCalendars();
+          const config = this.componentConfig();
+          if (config.openOnClick) {
+            this.showCalendars();
+          } else if (!config.dropdown && config.openOnFocus && event instanceof MouseEvent && event.detail > 0) {
+            target.focus();
+          }
           return;
         }
         this.closeModal();
@@ -389,6 +394,15 @@ export class DatePickerModalComponent implements OnInit, ControlValueAccessor, V
       if (!this.isModalOpen()) {
         this.showCalendars();
       }
+    }
+  }
+
+  inputPointerDown(event: PointerEvent) {
+    const config = this.componentConfig();
+    if (!config.dropdown && config.openOnFocus && event.isPrimary && event.button === 0 &&
+        !this.disabled() && !this.isModalOpen()) {
+      // Defer pointer focus until the click so the new modal backdrop cannot intercept it.
+      event.preventDefault();
     }
   }
 
